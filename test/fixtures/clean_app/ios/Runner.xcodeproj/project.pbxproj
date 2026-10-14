@@ -1,0 +1,7 @@
+// !$*UTF8*$!
+{
+	objects = {
+		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; };
+		AA0000000000000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; };
+	};
+}

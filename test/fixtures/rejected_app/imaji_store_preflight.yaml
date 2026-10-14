@@ -1,0 +1,9 @@
+# Synthetic configuration exercising disable/ignore with reasons.
+rules:
+  push-entitlement:
+    enabled: false
+    reason: The fixture has no push feature.
+ignore:
+  - rule: purpose-string-quality
+    match: NSPhotoLibraryUsageDescription
+    reason: Wording approved in a previous review.

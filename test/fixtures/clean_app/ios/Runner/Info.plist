@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>Clean App</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>es</string>
+	</array>
+	<key>CFBundleName</key>
+	<string>clean_app</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>The camera takes the photo on your recipe cards, for example a picture of tonight's dinner before you share it.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>The microphone captures sound for recipe videos you film in the app, for example narrating a step while you cook.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose a cover for each recipe card from your library, for example a photo from last weekend's barbecue.</string>
+</dict>
+</plist>
