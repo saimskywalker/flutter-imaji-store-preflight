@@ -69,7 +69,7 @@ tracking-usage-description — NSUserTrackingUsageDescription is present exactly
 | `push-entitlement` | Apps using push (FCM, OneSignal, Airship, `remote-notification`) carry `aps-environment`, set to `development` or `production` | Notifications that never arrive, with nothing failing |
 | `android-picker-queries` | `file_picker` apps declare an `OPEN_DOCUMENT` `<queries>` intent | A file picker that never opens on some Android ROMs |
 | `android-target-sdk` | `targetSdk` meets Google Play's current deadline (dated table, overridable; follows `flutter.targetSdkVersion` into your Flutter SDK) | Play Console refusing your update — usually during an urgent fix |
-| `android-16kb-page-size` | When `targetSdk` is 35+ or cannot be determined: Android Gradle Plugin ≥ 8.5.1 (or legacy packaging), NDK r28+ for your own native code | Play rejecting bundles without 16 KB page-size support |
+| `android-16kb-page-size` | When `targetSdk` is 35+ or cannot be determined: Android Gradle Plugin ≥ 8.5.1 (or legacy packaging), NDK r28+ for your own native code | Play not letting you release an update without 16 KB page-size support, from 1 February 2027 ([Android guide](https://developer.android.com/guide/practices/page-sizes#google-play-compatibility-requirement)) |
 | `unreadable-file` | Every file above parses (binary plists get a `plutil` hint) | Rules silently passing a file nobody could read |
 
 `imaji_store_preflight --list-rules` prints this list;

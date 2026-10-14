@@ -2,7 +2,18 @@
 
 ## 0.1.1
 
-Documentation only; no rule or CLI behaviour changes.
+Documentation and rule text only; no rule logic or CLI behaviour changes.
+
+- `android-16kb-page-size` states Google Play's 16 KB requirement as the
+  Android page-sizes guide now does: apps targeting Android 15 (API level 35)
+  or higher must support 16 KB pages on 64-bit devices, and from
+  1 February 2027 an update without that support cannot be released. The old
+  text said bundles have been refused at upload since 1 November 2025; that
+  date is the requirement's announced start, not a release block. The rule's
+  docs link now points at the guide's "Google Play compatibility requirement"
+  section and the announcement post; the AGP finding no longer claims older
+  versions align to 4 KB, and the fix adds the AGP 8.0-and-older
+  `android.bundle.enableUncompressedNativeLibs = false` step from the guide.
 
 - README: pub.dev version and pub points badges; install pinned to
   `^0.1.0`; the GitHub Actions example activates `^0.1.0` and explains that a
