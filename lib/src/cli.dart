@@ -43,9 +43,10 @@ ArgParser _parser() => ArgParser(usageLineLength: 80)
     'format',
     abbr: 'f',
     help: 'Output format.',
-    allowed: ['text', 'json'],
+    allowed: ['text', 'json', 'sarif'],
     defaultsTo: 'text',
   )
+  ..addFlag('sarif', negatable: false, help: 'Shorthand for --format sarif.')
   ..addOption(
     'output',
     abbr: 'o',
@@ -204,7 +205,7 @@ int runCli(
   final prefix = relative == '.' || relative.startsWith('..')
       ? ''
       : p.split(relative).join('/');
-  final format = args.option('format')!;
+  final format = args.flag('sarif') ? 'sarif' : args.option('format')!;
   final output = args.option('output');
   final color = args.wasParsed('color')
       ? args.flag('color')
@@ -214,6 +215,7 @@ int runCli(
             !env.containsKey('NO_COLOR');
   final rendered = switch (format) {
     'json' => renderJson(report, pathPrefix: prefix),
+    'sarif' => renderSarif(report, pathPrefix: prefix),
     _ => renderText(
       report,
       pathPrefix: prefix,

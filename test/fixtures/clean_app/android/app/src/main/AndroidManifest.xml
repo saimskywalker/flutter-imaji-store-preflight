@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:label="clean_app" android:icon="@mipmap/ic_launcher">
+        <activity android:name=".MainActivity" android:exported="true" />
+    </application>
+    <!-- The system file picker resolves ACTION_OPEN_DOCUMENT through package visibility. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.OPEN_DOCUMENT" />
+            <category android:name="android.intent.category.OPENABLE" />
+            <data android:mimeType="*/*" />
+        </intent>
+    </queries>
+</manifest>
