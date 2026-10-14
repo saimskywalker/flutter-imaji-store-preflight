@@ -10,12 +10,15 @@ data-type map, Play's target API deadlines).
 ```bash
 dart pub get
 dart format .
-dart analyze          # must report "No issues found!"
+dart analyze --fatal-infos
 dart test
+dart pub publish --dry-run
 dart run imaji_store_preflight --project test/fixtures/rejected_app
 ```
 
-CI runs exactly these on the minimum supported SDK and on the latest stable.
+CI runs these on the minimum supported SDK (3.8.0) and a pinned current
+stable, with `dart format --output=none --set-exit-if-changed .` (on the
+pinned stable only) in place of `dart format .`.
 
 ## Adding a rule
 
