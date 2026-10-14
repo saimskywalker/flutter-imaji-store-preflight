@@ -247,8 +247,7 @@ use an ELF alignment check such as
 ## Support
 
 If this saved you a review cycle, a ⭐ on the repository helps other Flutter
-developers find it. Sponsorship through GitHub Sponsors keeps the rule tables
-current with Apple's and Google's changes.
+developers find it.
 
 ## License
 
