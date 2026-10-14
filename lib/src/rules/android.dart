@@ -368,7 +368,7 @@ class Android16KbPageSizeRule extends Rule {
       'C/C++ code also need NDK r28+ (or the 16 KB linker flag). Source '
       'checks cannot see prebuilt `.so` files inside plugins: verify the '
       'built bundle with an ELF alignment check such as '
-      'https://github.com/saimskywalker/android-16kb-check or the '
+      'https://github.com/saimskywalker/android-imaji-16kb-alignment or the '
       '`check_elf_alignment.sh` script from the Android documentation.';
 
   @override
