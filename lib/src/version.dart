@@ -1,5 +1,5 @@
 /// The package version. Kept in sync with `pubspec.yaml` by a test.
-const packageVersion = '0.1.0';
+const packageVersion = '0.1.1';
 
 /// The package name, as published on pub.dev.
 const packageName = 'imaji_store_preflight';
