@@ -1,9 +1,9 @@
-# store_preflight
+# imaji_store_preflight
 
 > Status: **pre-alpha, not published.** Progress is tracked in the issues.
 
 The App Store and Google Play reject builds for configuration contradictions
-that compile cleanly and pass every test. `store_preflight` reads your
+that compile cleanly and pass every test. `imaji_store_preflight` reads your
 `Info.plist`, privacy manifest, entitlements, `ExportOptions.plist` and
 `AndroidManifest.xml`, and fails CI on the contradictions reviewers look for.
 
@@ -26,8 +26,8 @@ prevents — not just what is wrong.
 ## Planned usage
 
 ```bash
-dart run store_preflight            # reads ios/ and android/ from the project root
-dart run store_preflight --sarif    # GitHub code scanning output
+dart run imaji_store_preflight            # reads ios/ and android/ from the project root
+dart run imaji_store_preflight --sarif    # GitHub code scanning output
 ```
 
 ## License

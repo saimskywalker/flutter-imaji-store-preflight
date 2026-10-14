@@ -1,13 +1,9 @@
 .dart_tool/
 .packages
-build/
-pubspec.lock
-.flutter-plugins
-.flutter-plugins-dependencies
+/build/
+# The package's own lock file. Fixture projects under test/ keep theirs.
+/pubspec.lock
 .idea/
 *.iml
 .DS_Store
-android/.gradle/
-android/local.properties
-example/ios/Pods/
-example/.flutter-plugins*
+/doc/api/
