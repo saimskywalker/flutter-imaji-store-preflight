@@ -351,20 +351,31 @@ class Android16KbPageSizeRule extends Rule {
   @override
   Severity get defaultSeverity => Severity.warning;
 
+  // Policy text follows the "Google Play compatibility requirement" section of
+  // https://developer.android.com/guide/practices/page-sizes (last updated
+  // 2026-09-16) and the announcement at
+  // https://android-developers.googleblog.com/2025/05/prepare-play-apps-for-devices-with-16kb-page-size.html.
+  // The AGP 8.5.1 and NDK r28 thresholds come from the same guide's "Update
+  // the packaging of your shared libraries" and "Compile your app using 16 KB
+  // ELF alignment" sections.
   @override
   String get why =>
-      'Since 1 November 2025 Google Play requires new apps and updates that '
-      'target Android 15 or higher to support devices with 16 KB memory '
-      'pages. Native libraries must be 16 KB aligned in the APK/AAB; Android '
-      'Gradle Plugin versions before 8.5.1 align uncompressed libraries to '
-      '4 KB, so the bundle is refused at upload or the app crashes on load '
-      'on 16 KB devices.';
+      'Google Play requires apps that target Android 15 (API level 35) or '
+      'higher to support 16 KB memory page sizes on 64-bit devices; the '
+      'requirement was announced for new apps and updates submitted from '
+      '1 November 2025, and from 1 February 2027 an app update without '
+      '16 KB support cannot be released. Uncompressed native libraries must '
+      'be 16 KB zip-aligned in the APK/AAB, which needs Android Gradle Plugin '
+      '8.5.1 or later; with older versions an app built from a bundle in '
+      'Play may not install on 16 KB devices.';
 
   @override
   String get fix =>
       'Upgrade the Android Gradle Plugin to 8.5.1 or later (in '
       'android/settings.gradle(.kts)); if that is impossible, set '
-      '`packaging.jniLibs.useLegacyPackaging = true`. Projects with their own '
+      '`packaging.jniLibs.useLegacyPackaging = true` (on AGP 8.0 or older, '
+      'also `android.bundle.enableUncompressedNativeLibs = false` in '
+      'android/gradle.properties). Projects with their own '
       'C/C++ code also need NDK r28+ (or the 16 KB linker flag). Source '
       'checks cannot see prebuilt `.so` files inside plugins: verify the '
       'built bundle with an ELF alignment check such as '
@@ -373,7 +384,8 @@ class Android16KbPageSizeRule extends Rule {
 
   @override
   List<String> get docs => const [
-    'https://developer.android.com/guide/practices/page-sizes',
+    'https://developer.android.com/guide/practices/page-sizes#google-play-compatibility-requirement',
+    'https://android-developers.googleblog.com/2025/05/prepare-play-apps-for-devices-with-16kb-page-size.html',
   ];
 
   static final _pluginsDsl = RegExp(
@@ -419,8 +431,8 @@ class Android16KbPageSizeRule extends Rule {
         _older(agp.group(1)!, const [8, 5, 1]) &&
         !_legacyPackaging.hasMatch(app.text)) {
       yield finding(
-        'Android Gradle Plugin ${agp.group(1)} aligns uncompressed native '
-        'libraries to 4 KB; 16 KB alignment needs 8.5.1 or later.',
+        'Android Gradle Plugin ${agp.group(1)} is older than 8.5.1, the '
+        'version needed to 16 KB zip-align uncompressed native libraries.',
         path: agpFile!.path,
         line: agpFile.lineOf(agp),
       );

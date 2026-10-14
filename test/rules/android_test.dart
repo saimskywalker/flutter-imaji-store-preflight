@@ -236,6 +236,26 @@ void main() {
     const appGradle = 'android/app/build.gradle.kts';
     const settingsGradle = 'android/settings.gradle.kts';
 
+    // "Google Play compatibility requirement" in
+    // https://developer.android.com/guide/practices/page-sizes (last updated
+    // 2026-09-16): "Starting February 1, 2027, if your app updates don't
+    // support 16 KB memory page sizes, you won't be able to release these
+    // updates." The 1 November 2025 date is the announcement's, from
+    // https://android-developers.googleblog.com/2025/05/prepare-play-apps-for-devices-with-16kb-page-size.html.
+    test('states the Play requirement as the Android guide does', () {
+      expect(rule.why, contains('Android 15 (API level 35)'));
+      expect(rule.why, contains('64-bit devices'));
+      expect(rule.why, contains('1 February 2027'));
+      expect(rule.why, isNot(contains('refused at upload')));
+      expect(
+        rule.docs,
+        contains(
+          'https://developer.android.com/guide/practices/page-sizes'
+          '#google-play-compatibility-requirement',
+        ),
+      );
+    });
+
     test('passes with a current Android Gradle Plugin', () {
       expect(
         runRule(rule, {
