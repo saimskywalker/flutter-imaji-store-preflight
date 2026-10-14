@@ -1,4 +1,5 @@
 import '../rule.dart';
+import 'ios_config.dart';
 import 'privacy_manifest.dart';
 import 'purpose_strings.dart';
 import 'unreadable_file.dart';
@@ -13,4 +14,8 @@ const List<Rule> builtInRules = [
   TrackingUsageDescriptionRule(),
   PurposeStringMissingRule(),
   PurposeStringQualityRule(),
+  BackgroundModesRule(),
+  ExportOptionsBuildNumberRule(),
+  BundleLocalizationsRule(),
+  PushEntitlementRule(),
 ];
