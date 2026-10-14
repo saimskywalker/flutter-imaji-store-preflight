@@ -1,6 +1,8 @@
 # imaji_store_preflight — catch App Store & Google Play rejections in Flutter projects
 
 [![CI](https://github.com/saimskywalker/flutter-imaji-store-preflight/actions/workflows/ci.yml/badge.svg)](https://github.com/saimskywalker/flutter-imaji-store-preflight/actions/workflows/ci.yml)
+[![pub version](https://img.shields.io/pub/v/imaji_store_preflight.svg)](https://pub.dev/packages/imaji_store_preflight)
+[![pub points](https://img.shields.io/pub/points/imaji_store_preflight)](https://pub.dev/packages/imaji_store_preflight/score)
 
 **Your build passed CI and still got rejected.**
 
@@ -25,12 +27,12 @@ second on an `ubuntu-latest` runner.
 ## Quick start (30 seconds)
 
 ```bash
-# Once, globally:
+# Once, globally (puts imaji_store_preflight on your PATH via ~/.pub-cache/bin):
 dart pub global activate imaji_store_preflight
 cd my_flutter_app && imaji_store_preflight
 
 # …or pinned per project, as a dev dependency:
-flutter pub add --dev imaji_store_preflight
+flutter pub add --dev 'imaji_store_preflight:^0.1.0'
 dart run imaji_store_preflight
 ```
 
@@ -45,28 +47,29 @@ tracking-usage-description — NSUserTrackingUsageDescription is present exactly
   `NSUserTrackingUsageDescription` while the app declares no tracking — ...
   fix: Treat the purpose string, `NSPrivacyTracking` and the privacy label as
   one decision. ...
+  docs: https://developer.apple.com/documentation/bundleresources/information-property-list/nsusertrackingusagedescription
 
-✗ 14 rules checked: 3 errors, 1 warning, 0 info. Failing: findings at or above `error`.
+✗ 15 rules checked: 3 errors, 1 warning, 0 info. Failing: findings at or above `error`.
 ```
 
 ## Rules
 
 | Rule | Checks | Prevents |
 |---|---|---|
-| `privacy-manifest-present` | `PrivacyInfo.xcprivacy` exists and is in Copy Bundle Resources | ITMS-91053 at upload; a manifest that never reaches the bundle |
+| `privacy-manifest-present` | `PrivacyInfo.xcprivacy` exists (warning) and is in Copy Bundle Resources (error) | ITMS-91053 at upload when the app's own code uses a required-reason API; a manifest that never reaches the bundle |
 | `privacy-manifest-values` | Data types, purposes, required-reason API categories and reason codes are Apple's exact values | A misspelt type that silently declares nothing; ITMS-91053 for an unapproved reason |
 | `privacy-manifest-tracking` | `NSPrivacyTracking` agrees with each entry's Tracking flag and with `NSPrivacyTrackingDomains` | A manifest that contradicts itself and the privacy label |
 | `privacy-manifest-sdk-data` | Collected data covers what linked SDKs (Firebase, AdMob, StoreKit, Sentry, …) collect, read from `pubspec.lock` | "Collects nothing" next to an analytics SDK — a label/manifest mismatch reviewers flag |
-| `tracking-usage-description` | `NSUserTrackingUsageDescription` exists exactly when tracking is declared | App Store Connect refusing "Add for Review"; an ATT request that terminates the app |
-| `purpose-string-missing` | Plugins that touch the camera, microphone, photos, location, contacts, Face ID… have their `NS…UsageDescription` | ITMS-90683 "Missing purpose string"; a crash at the first permission request |
+| `tracking-usage-description` | `NSUserTrackingUsageDescription` exists exactly when `PrivacyInfo.xcprivacy` declares tracking; warns when `app_tracking_transparency` is linked without it | App Store Connect refusing "Add for Review"; an ATT request that terminates the app |
+| `purpose-string-missing` | Plugins that touch the camera, microphone, photos, location, contacts, Face ID… have their `NS…UsageDescription`; Always location also has When-In-Use | ITMS-90683 "Missing purpose string"; a crash at the first permission request |
 | `purpose-string-quality` | Purpose strings name a feature and give an example instead of restating the permission | Guideline 5.1.1(ii) rejection ("needs camera access") |
-| `background-modes-justified` | Every `UIBackgroundModes` entry is a known mode with a recorded justification or a plugin that uses it | Guideline 2.5.4 rejection ("unable to locate any features that require persistent audio") |
-| `export-options-build-number` | `ExportOptions.plist` sets `manageAppVersionAndBuildNumber` to false | Xcode silently bumping `CFBundleVersion` at export |
+| `background-modes-justified` | Every `UIBackgroundModes` entry is a mode Apple defines and has a justification recorded under `allow` — an error when no linked plugin uses the mode, a warning when one plausibly does; `processing` also needs `BGTaskSchedulerPermittedIdentifiers` | Guideline 2.5.4 rejection ("unable to locate any features that require persistent audio") |
+| `export-options-build-number` | Every `ExportOptions*.plist` with method `app-store` / `app-store-connect` sets `manageAppVersionAndBuildNumber` to false (it defaults to YES) | Xcode silently bumping `CFBundleVersion` at export |
 | `bundle-localizations` | `CFBundleLocalizations` matches your ARB locales | Store listing and system prompts stuck in one language, or a listing that claims a language you don't ship |
-| `push-entitlement` | Apps using push (FCM, OneSignal, `remote-notification`) carry `aps-environment` | Notifications that never arrive, with nothing failing |
+| `push-entitlement` | Apps using push (FCM, OneSignal, Airship, `remote-notification`) carry `aps-environment`, set to `development` or `production` | Notifications that never arrive, with nothing failing |
 | `android-picker-queries` | `file_picker` apps declare an `OPEN_DOCUMENT` `<queries>` intent | A file picker that never opens on some Android ROMs |
 | `android-target-sdk` | `targetSdk` meets Google Play's current deadline (dated table, overridable; follows `flutter.targetSdkVersion` into your Flutter SDK) | Play Console refusing your update — usually during an urgent fix |
-| `android-16kb-page-size` | Android Gradle Plugin ≥ 8.5.1 (or legacy packaging), NDK r28+ for your own native code | Play rejecting bundles without 16 KB page-size support |
+| `android-16kb-page-size` | When `targetSdk` is 35+ or cannot be determined: Android Gradle Plugin ≥ 8.5.1 (or legacy packaging), NDK r28+ for your own native code | Play rejecting bundles without 16 KB page-size support |
 | `unreadable-file` | Every file above parses (binary plists get a `plutil` hint) | Rules silently passing a file nobody could read |
 
 `imaji_store_preflight --list-rules` prints this list;
@@ -89,14 +92,19 @@ imaji_store_preflight [options] [project-dir]
     --[no-]color        Colour text output (default: when stdout is a terminal and NO_COLOR is unset)
     --list-rules        List every rule
     --explain=<rule-id> Explain one rule
+    --version           Print the version
+-h, --help              Show the usage
 ```
 
 **Exit codes:** `0` no finding at or above `--fail-on`; `1` at least one;
-`2` usage error, invalid configuration, or not a Flutter project.
+`2` usage error (including an unknown `--explain` rule, a bad `--today`, or an
+`--output` file that cannot be written), invalid configuration, or not a
+Flutter project (no `pubspec.yaml`, `ios/` or `android/`).
 
-Paths in every output format are relative to the working directory, so in a
-monorepo run it from the repository root with `--project apps/my_app` and the
-paths (and SARIF annotations) point at the right files.
+Finding locations in every output format are relative to the working
+directory when the project is inside it (otherwise to the project root), so in
+a monorepo run it from the repository root with `--project apps/my_app` and the
+locations (and SARIF annotations) point at the right files.
 
 ## Configuration
 
@@ -182,7 +190,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
-      - run: dart pub global activate imaji_store_preflight 0.1.0
+      - run: dart pub global activate imaji_store_preflight '^0.1.0'
       - run: dart pub global run imaji_store_preflight --sarif --output preflight.sarif
       - uses: github/codeql-action/upload-sarif@v3
         if: always()           # upload even when the check fails the job
@@ -190,6 +198,14 @@ jobs:
           sarif_file: preflight.sarif
           category: imaji-store-preflight
 ```
+
+If `android/app/build.gradle(.kts)` sets `targetSdk = flutter.targetSdkVersion`
+(the `flutter create` default), the value lives in the Flutter SDK, which the
+tool finds through `.dart_tool/package_config.json` or `FLUTTER_ROOT`. With
+only Dart on the runner neither exists, so `android-target-sdk` reports an
+`info` finding instead of checking the deadline. Set its `target_sdk` option,
+or install Flutter (e.g. `subosito/flutter-action`) and run `flutter pub get`
+before the check.
 
 Without code scanning (it needs a public repository or GitHub Advanced
 Security), drop the upload step and use the default text output — the job log
