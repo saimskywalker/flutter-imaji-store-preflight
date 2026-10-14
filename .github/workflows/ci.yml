@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: format, analyze, test (Dart ${{ matrix.sdk }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # Minimum supported SDK (pubspec.yaml) and a pinned current stable.
+        sdk: ['3.8.0', '3.13.5']
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: dart-lang/setup-dart@7654d458321ee25acccccfdb86cd48bd95768ff1 # v1.8.0
+        with:
+          sdk: ${{ matrix.sdk }}
+      - run: dart pub get
+      # The formatter's style follows the SDK version, so format is checked
+      # on the pinned current SDK only.
+      - if: matrix.sdk == '3.13.5'
+        run: dart format --output=none --set-exit-if-changed .
+      - run: dart analyze --fatal-infos
+      - run: dart test
+      - name: pub publish dry run
+        run: dart pub publish --dry-run
+      - name: run against the fixtures
+        run: |
+          dart run imaji_store_preflight --project test/fixtures/clean_app
+          dart run imaji_store_preflight --project test/fixtures/rejected_app --sarif --output rejected.sarif || test $? -eq 1
