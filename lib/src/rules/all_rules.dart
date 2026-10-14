@@ -1,4 +1,5 @@
 import '../rule.dart';
+import 'android.dart';
 import 'ios_config.dart';
 import 'privacy_manifest.dart';
 import 'purpose_strings.dart';
@@ -18,4 +19,7 @@ const List<Rule> builtInRules = [
   ExportOptionsBuildNumberRule(),
   BundleLocalizationsRule(),
   PushEntitlementRule(),
+  AndroidPickerQueriesRule(),
+  AndroidTargetSdkRule(),
+  Android16KbPageSizeRule(),
 ];
