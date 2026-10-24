@@ -265,6 +265,13 @@ use an ELF alignment check such as
 If this saved you a review cycle, a ⭐ on the repository helps other Flutter
 developers find it.
 
+## Trademarks
+
+Apple, App Store, iOS and Xcode are trademarks of Apple Inc. Google Play and
+Android are trademarks of Google LLC. This project is independent and is not
+affiliated with, sponsored by or endorsed by Apple or Google; the names are
+used only to say which store rules a check is about.
+
 ## License
 
 MIT © saimskywalker. See [LICENSE](LICENSE).
