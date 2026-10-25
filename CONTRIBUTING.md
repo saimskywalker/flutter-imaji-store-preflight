@@ -47,7 +47,7 @@ pinned stable only) in place of `dart format .`.
    invented: no real app names, bundle ids, hostnames or people.
 5. **Document it**: add a row to the README rule table (a test enforces this)
    and a line to `CHANGELOG.md`. If the rule ships a row marked "planned" in
-   the README's "Problems this solves" table, replace the roadmap issue link
+   the README's "Problems this solves" table, replace the plan issue link
    with the rule id.
 
 ## Updating a data table
@@ -60,3 +60,16 @@ by default, only deadlines Google has published).
 
 Small, focused commits with clear messages. Run the commands above before
 pushing.
+
+## AI-assisted contributions
+
+AI tools are fine to use; we just ask you to be open about it.
+
+- Say in the PR description which AI tools you used, if any: none, some or
+  most, plus the tool or agent and the model (for example "Claude Code,
+  Opus 5.5" or "Copilot, GPT-5"). The pull request template has a box for it.
+- Write the PR description and issues yourself, in your own words. Please
+  don't paste generated text; short, plain descriptions are welcome.
+- Read, run and test every line you submit, and be ready to explain it in
+  review.
+- Pull requests without the disclosure may be closed.

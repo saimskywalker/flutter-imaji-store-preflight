@@ -1,0 +1,59 @@
+name: Feature request or new rule
+description: Suggest a rule backed by a real rejection, a data table correction, or a CLI feature.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A new rule needs a documented source. See "Adding a rule" in
+        [CONTRIBUTING.md](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/CONTRIBUTING.md).
+  - type: dropdown
+    id: store
+    attributes:
+      label: Store
+      options:
+        - App Store (iOS)
+        - Google Play (Android)
+        - Both
+        - Not store specific (CLI, output formats)
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: The rejection or silent failure, or what you want the CLI to do.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Guideline or ITMS code, reviewer wording (anonymised), and links to the public Apple or Google documentation.
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed check or behaviour
+  - type: dropdown
+    id: ai-use
+    attributes:
+      label: Did you use an AI tool to write this issue?
+      options:
+        - "No"
+        - "Yes, for parts"
+        - "Yes, mostly"
+    validations:
+      required: true
+  - type: input
+    id: ai-tool
+    attributes:
+      label: If yes, which tool and model?
+      description: Required if you answered yes above.
+      placeholder: "e.g. Claude Code, Opus 5.5"
+  - type: checkboxes
+    id: own-words
+    attributes:
+      label: Your own words
+      options:
+        - label: I wrote this issue in my own words.
+          required: true
