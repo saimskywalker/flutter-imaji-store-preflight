@@ -1,28 +1,28 @@
-# imaji_store_preflight — catch App Store & Google Play rejections in Flutter projects
+# imaji_store_preflight
 
-[![CI](https://github.com/saimskywalker/flutter-imaji-store-preflight/actions/workflows/ci.yml/badge.svg)](https://github.com/saimskywalker/flutter-imaji-store-preflight/actions/workflows/ci.yml)
 [![pub version](https://img.shields.io/pub/v/imaji_store_preflight.svg)](https://pub.dev/packages/imaji_store_preflight)
 [![pub points](https://img.shields.io/pub/points/imaji_store_preflight)](https://pub.dev/packages/imaji_store_preflight/score)
+[![CI](https://github.com/saimskywalker/flutter-imaji-store-preflight/actions/workflows/ci.yml/badge.svg)](https://github.com/saimskywalker/flutter-imaji-store-preflight/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Your build passed CI and still got rejected.**
+**Catch App Store and Google Play rejections before you upload.** One Dart
+command lints your Flutter project's `Info.plist`, privacy manifest,
+entitlements and `AndroidManifest.xml`, and fails CI on the mistakes that get
+builds refused at upload or rejected in review.
 
-Not for a crash, and not for a failing test — for a contradiction in the
-configuration you ship: a privacy manifest that says the app collects nothing
-next to an analytics SDK, a tracking purpose string while tracking is declared
-off, a background mode the reviewer could not find a feature for, a purpose
-string that just restates the permission. These compile cleanly, pass every
-test, and cost a full review cycle each.
+A missing purpose string, a privacy manifest that never reaches the bundle, a
+background mode with no feature behind it: these compile, pass every test, and
+only surface after upload, in an `ITMS-` email or a rejection that costs you a
+review cycle. `imaji_store_preflight` reads the files you ship and catches them
+in about a second, on any machine that has Dart. No Xcode, no macOS runner, no
+build.
 
-`imaji_store_preflight` is a Dart CLI that reads your Flutter project's
-store-facing configuration — `ios/Runner/Info.plist`, `PrivacyInfo.xcprivacy`,
-entitlements, `ExportOptions.plist`, `android/app/src/main/AndroidManifest.xml`,
-the Gradle scripts and `pubspec.lock` — and fails CI on the contradictions
-reviewers reject. Every rule says **why it matters** (which rejection or silent
-failure it prevents) and **how to fix it**, with a link to Apple's or Google's
-documentation.
-
-It is pure Dart: no Xcode, no macOS runner, no build. It runs in about a
-second on an `ubuntu-latest` runner.
+[Quick start](#quick-start-30-seconds) ·
+[Problems this solves](#problems-this-solves) ·
+[Rules](#rules) ·
+[GitHub Actions](#github-actions) ·
+[Configuration](#configuration) ·
+[FAQ and limitations](#faq-and-limitations)
 
 ## Quick start (30 seconds)
 
@@ -36,21 +36,80 @@ flutter pub add --dev 'imaji_store_preflight:^0.1.0'
 dart run imaji_store_preflight
 ```
 
-Example output:
+If `~/.pub-cache/bin` is not on your `PATH`, run
+`dart pub global run imaji_store_preflight` instead.
+
+On a fresh `flutter create` app it reports a single warning: there is no
+privacy manifest yet. Here is a real run after adding `image_picker` and a
+one-line camera purpose string (`--brief` drops the explanations):
 
 ```text
-tracking-usage-description — NSUserTrackingUsageDescription is present exactly when tracking is
-  error  ios/Runner/Info.plist:17
-    `NSUserTrackingUsageDescription` is present while
-    ios/Runner/PrivacyInfo.xcprivacy declares `NSPrivacyTracking` false.
-  why: App Store Connect refuses "Add for Review" for a build that carries
-  `NSUserTrackingUsageDescription` while the app declares no tracking — ...
-  fix: Treat the purpose string, `NSPrivacyTracking` and the privacy label as
-  one decision. ...
-  docs: https://developer.apple.com/documentation/bundleresources/information-property-list/nsusertrackingusagedescription
+$ flutter pub add image_picker
+$ imaji_store_preflight --brief
+privacy-manifest-present — The app target ships a PrivacyInfo.xcprivacy
+  warning  ios/Runner/Info.plist
+    No privacy manifest at ios/Runner/PrivacyInfo.xcprivacy (or the path
+    configured under `paths.privacy_manifest`).
+
+purpose-string-missing — Linked plugins have the purpose strings they need
+  error  ios/Runner/Info.plist
+    `NSPhotoLibraryUsageDescription` is missing, but image_picker needs it.
+  error  ios/Runner/Info.plist
+    `NSMicrophoneUsageDescription` is missing, but image_picker needs it.
+
+purpose-string-quality — Purpose strings name a feature and give an example, not restate the permission
+  error  ios/Runner/Info.plist:29
+    `NSCameraUsageDescription` only restates the permission; name the feature
+    that uses it and give an example. Current text: "This app needs camera
+    access."
 
 ✗ 15 rules checked: 3 errors, 1 warning, 0 info. Failing: findings at or above `error`.
 ```
+
+The exit code is `1`, so CI fails. Without `--brief`, every rule also says
+**why** it matters, **how to fix** it, and links Apple's or Google's
+documentation:
+
+```text
+purpose-string-missing — Linked plugins have the purpose strings they need
+  error  ios/Runner/Info.plist
+    `NSPhotoLibraryUsageDescription` is missing, but image_picker needs it.
+  …
+  why: App Store Connect rejects an upload whose code references a protected
+  resource without its Info.plist purpose string (ITMS-90683, "Missing purpose
+  string"), and iOS terminates the app the first time it asks for a permission
+  whose string is missing. Neither shows up in a simulator run that never
+  reaches the permission prompt.
+  fix: Add the key to ios/Runner/Info.plist with a sentence that names the
+  feature and gives an example (see `purpose-string-quality`). Extend the plugin
+  table with the `required_by_plugin` option.
+  docs: https://developer.apple.com/documentation/uikit/requesting-access-to-protected-resources
+```
+
+`--format json` and `--sarif` give the same findings in machine-readable form.
+
+## Problems this solves
+
+If you got one of these, this is the rule that catches it before upload.
+Planned rules link their roadmap issue.
+
+| Store message or rejection | Caught by | Related upstream threads |
+|---|---|---|
+| ITMS-90683: Missing purpose string in Info.plist, for a plugin you use (`image_picker`, `camera`, `geolocator`, `local_auth`, …) | `purpose-string-missing` | |
+| ITMS-90683 for an API your app never calls, referenced by a dependency | planned: [#12](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/12), [#25](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/25) | [flutter/flutter#21941](https://github.com/flutter/flutter/issues/21941) |
+| Guideline 5.1.1(ii): the purpose string does not explain how the app uses the data | `purpose-string-quality` | |
+| ITMS-91053: Missing API declaration: your app's own privacy manifest is missing, not in Copy Bundle Resources, or uses a value Apple does not define | `privacy-manifest-present`, `privacy-manifest-values` | [flutter/flutter#145269](https://github.com/flutter/flutter/issues/145269), [flutter/flutter#143232](https://github.com/flutter/flutter/issues/143232) |
+| ITMS-91053 for required-reason APIs called from FFI or native assets | planned: [#17](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/17) | [flutter/flutter#147186](https://github.com/flutter/flutter/issues/147186), [flutter/flutter#140966](https://github.com/flutter/flutter/issues/140966) |
+| ITMS-91061: Missing privacy manifest for a third-party SDK | planned: [#13](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/13) | [firebase/flutterfire#16937](https://github.com/firebase/flutterfire/issues/16937) |
+| Privacy manifest declares no collected data while Firebase, AdMob, Sentry or another known SDK is linked | `privacy-manifest-sdk-data` | |
+| App Store Connect refuses "Add for Review": `NSUserTrackingUsageDescription` present while no tracking is declared | `tracking-usage-description` | |
+| Guideline 2.5.4: "unable to locate any features that require persistent audio" | `background-modes-justified` | |
+| Missing Push Notification Entitlement, or pushes that never arrive, with a push SDK linked | `push-entitlement` | [flutter/flutter#14182](https://github.com/flutter/flutter/issues/14182) |
+| Google Play refuses an update below the target API level deadline | `android-target-sdk` | |
+| Google Play 16 KB page-size requirement (the build toolchain; prebuilt `.so` files need the built APK/AAB) | `android-16kb-page-size` | |
+| Google Play Photo and Video Permissions policy (`READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO`) | planned: [#10](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/10) | [flutter/flutter#173536](https://github.com/flutter/flutter/issues/173536), [flutter/flutter#171494](https://github.com/flutter/flutter/issues/171494) |
+| Google Play: manifest does not include the `AD_ID` permission | planned: [#18](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/18) | [googleads/googleads-mobile-flutter#922](https://github.com/googleads/googleads-mobile-flutter/issues/922) |
+| Google Play "edge-to-edge may not display for all users" warnings | planned: [#20](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/20) | [flutter/flutter#192921](https://github.com/flutter/flutter/issues/192921), [flutter/flutter#183372](https://github.com/flutter/flutter/issues/183372) |
 
 ## Rules
 
@@ -226,10 +285,44 @@ void main() {
 `renderJson` (stable schema, `schemaVersion: 1`) and `renderSarif` are exported
 too, and `Rule` is the extension point — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## FAQ
+## How it compares
+
+It complements the checks you already have; it does not replace them.
+
+- **Upload processing in App Store Connect / Xcode "Validate App"** is the
+  authority on `ITMS-` errors, but needs macOS, a signed archive and a
+  finished build. It does not judge purpose-string wording or look at
+  Android.
+- **[fastlane precheck](https://docs.fastlane.tools/actions/precheck/)**
+  checks your App Store *metadata* (description, keywords, URLs) for
+  rejection-prone text. `imaji_store_preflight` checks the *configuration
+  files in your project*, so the two do not overlap.
+- **Google Play Console** tells you about target API level and 16 KB
+  page-size problems when you upload a bundle. This tool tells you on the pull
+  request that introduces them.
+
+## FAQ and limitations
 
 **Does it need macOS or Xcode?** No. It reads files; it never builds. Run it on
 Linux runners, in a pre-commit hook, anywhere Dart runs.
+
+**Will it find every reason for a rejection?** No. It finds contradictions and
+omissions in the configuration files listed above. It does not see your
+app's behaviour, your store listing or your binary. Treat a clean run as
+"none of these known mistakes", not as an approval.
+
+**Does it read my dependencies' own privacy manifests or scan native code for
+required-reason APIs?** Not yet. It reads `pubspec.lock` to know which
+plugins are linked; checking their manifests and native code is planned in
+[#13](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/13)
+and
+[#17](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/17).
+
+**Flavors, app extensions, monorepos?** Each run checks one `Info.plist`, one
+privacy manifest and one `AndroidManifest.xml` (configurable under `paths`).
+Use `--project` for each app in a monorepo; checking every flavor and
+extension in one run is planned in
+[#15](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/15).
 
 **My Info.plist is a binary plist.** Xcode reads both formats; this tool reads
 XML and says so clearly. Convert once with `plutil -convert xml1 Info.plist` —
@@ -259,6 +352,17 @@ the SDK collects it by default). Extend it with `sdk_data_types`.
 Prebuilt `.so` files inside plugins can only be checked in the built APK/AAB —
 use an ELF alignment check such as
 [android-imaji-16kb-alignment](https://github.com/saimskywalker/android-imaji-16kb-alignment).
+
+## Contributing
+
+The most useful contributions are **a rejection you hit that no rule
+catches** (open an issue with the anonymised reviewer wording or `ITMS-` code
+and the public Apple or Google documentation) and **corrections to the data
+tables** (privacy vocabulary, the SDK → data-type map, Play deadlines).
+[CONTRIBUTING.md](CONTRIBUTING.md) explains how to add a rule and which
+commands CI runs; issues labelled
+[good first issue](https://github.com/saimskywalker/flutter-imaji-store-preflight/labels/good%20first%20issue)
+are a good place to start.
 
 ## Support
 
