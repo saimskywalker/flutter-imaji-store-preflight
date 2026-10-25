@@ -46,7 +46,9 @@ pinned stable only) in place of `dart format .`.
    synthetic fixture (see `test/support/fixtures.dart`). Fixtures must be
    invented: no real app names, bundle ids, hostnames or people.
 5. **Document it**: add a row to the README rule table (a test enforces this)
-   and a line to `CHANGELOG.md`.
+   and a line to `CHANGELOG.md`. If the rule ships a row marked "planned" in
+   the README's "Problems this solves" table, replace the roadmap issue link
+   with the rule id.
 
 ## Updating a data table
 
