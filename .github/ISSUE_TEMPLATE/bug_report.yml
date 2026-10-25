@@ -1,0 +1,94 @@
+name: Bug report
+description: A false positive, a missed problem, or the CLI misbehaving.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please use invented app names, bundle ids and hostnames in anything
+        you paste. Security problems go through the Security tab, not here.
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: "0.1.1"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Output of `dart --version` (or `flutter --version`) and the host OS.
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of problem
+      options:
+        - False positive (flagged, but the store accepts it)
+        - False negative (a rejection the tool did not catch)
+        - Crash or wrong output from the CLI
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: rule
+    attributes:
+      label: Rule id, if any
+      placeholder: "e.g. the id printed next to the finding"
+  - type: textarea
+    id: command
+    attributes:
+      label: Command you ran
+      render: shell
+      placeholder: dart run imaji_store_preflight --project .
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: The smallest file or project snippet (Info.plist, PrivacyInfo.xcprivacy, AndroidManifest.xml, config) that shows it.
+      render: xml
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: For a false negative, link the App Review guideline, ITMS code or Play policy, and the rejection wording (anonymised).
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: What the tool printed, including the exit code.
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: ai-use
+    attributes:
+      label: Did you use an AI tool to write this issue?
+      options:
+        - "No"
+        - "Yes, for parts"
+        - "Yes, mostly"
+    validations:
+      required: true
+  - type: input
+    id: ai-tool
+    attributes:
+      label: If yes, which tool and model?
+      description: Required if you answered yes above.
+      placeholder: "e.g. Claude Code, Opus 5.5"
+  - type: checkboxes
+    id: own-words
+    attributes:
+      label: Your own words
+      options:
+        - label: I wrote this issue in my own words.
+          required: true
