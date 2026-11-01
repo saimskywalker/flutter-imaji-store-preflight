@@ -70,7 +70,7 @@ When a rule or its output changes, regenerate the golden file from the
 repository root:
 
 ```bash
-dart run imaji_store_preflight --project test/fixtures/production_app \
+dart run storehound --project test/fixtures/production_app \
   --fail-on info --today 2026-10-01 --brief --no-color \
   > test/fixtures/production_app.golden.txt
 ```

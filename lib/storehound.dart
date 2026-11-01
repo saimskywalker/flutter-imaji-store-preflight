@@ -2,7 +2,7 @@
 /// review.
 ///
 /// The command-line tool is the main entry point (`dart run
-/// imaji_store_preflight`), but the engine is a library too: load a
+/// storehound`), but the engine is a library too: load a
 /// configuration with `PreflightConfig.load`, run `runPreflight`, and render
 /// the `PreflightReport` with `renderText`, `renderJson` or `renderSarif`.
 ///

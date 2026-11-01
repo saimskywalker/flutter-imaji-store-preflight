@@ -11,7 +11,7 @@ body:
     id: version
     attributes:
       label: Package version
-      placeholder: "0.1.1"
+      placeholder: "0.2.0"
     validations:
       required: true
   - type: textarea
@@ -43,7 +43,7 @@ body:
     attributes:
       label: Command you ran
       render: shell
-      placeholder: dart run imaji_store_preflight --project .
+      placeholder: dart run storehound --project .
     validations:
       required: true
   - type: textarea

@@ -7,7 +7,12 @@ import 'project.dart';
 import 'rule.dart';
 
 /// The configuration file name looked up in the project root.
-const configFileName = 'imaji_store_preflight.yaml';
+const configFileName = 'storehound.yaml';
+
+/// The configuration file name used before the package was renamed to
+/// storehound (it was imaji_store_preflight). Read when [configFileName] is
+/// absent.
+const legacyConfigFileName = 'imaji_store_preflight.yaml';
 
 /// Thrown for a configuration file that is malformed or breaks a policy
 /// (for example, disabling a rule without a reason).

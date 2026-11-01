@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:imaji_store_preflight/imaji_store_preflight.dart';
+import 'package:storehound/storehound.dart';
 import 'package:test/test.dart';
 
 void main() {

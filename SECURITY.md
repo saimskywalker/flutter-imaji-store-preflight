@@ -6,12 +6,12 @@ Fixes land on the latest minor release only.
 
 | Version | Supported |
 |---|---|
-| 0.1.x | Yes |
+| 0.2.x | Yes |
 | Older | No |
 
 ## Reporting a vulnerability
 
-`imaji_store_preflight` reads project files such as `Info.plist`, privacy
+`storehound` reads project files such as `Info.plist`, privacy
 manifests and `AndroidManifest.xml`, often in CI. A crafted project file that
 makes it hang, crash in an exploitable way, read outside the project, or
 write somewhere unexpected is a security problem.

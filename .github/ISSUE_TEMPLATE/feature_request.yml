@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         A new rule needs a documented source. See "Adding a rule" in
-        [CONTRIBUTING.md](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/CONTRIBUTING.md).
+        [CONTRIBUTING.md](https://github.com/saimskywalker/storehound/blob/main/CONTRIBUTING.md).
   - type: dropdown
     id: store
     attributes:

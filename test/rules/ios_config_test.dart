@@ -1,5 +1,5 @@
-import 'package:imaji_store_preflight/imaji_store_preflight.dart';
-import 'package:imaji_store_preflight/src/rules/ios_config.dart';
+import 'package:storehound/src/rules/ios_config.dart';
+import 'package:storehound/storehound.dart';
 import 'package:test/test.dart';
 
 import '../support/fixtures.dart';

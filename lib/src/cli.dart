@@ -165,9 +165,18 @@ int runCli(
   PreflightConfig config;
   try {
     final explicit = args.option('config');
-    final path = explicit != null
+    var path = explicit != null
         ? p.join(cwd, explicit)
         : p.join(root, configFileName);
+    if (explicit == null && !File(path).existsSync()) {
+      final legacy = p.join(root, legacyConfigFileName);
+      if (File(legacy).existsSync()) {
+        err.writeln(
+          'Reading $legacyConfigFileName; rename it to $configFileName.',
+        );
+        path = legacy;
+      }
+    }
     config = explicit != null || File(path).existsSync()
         ? PreflightConfig.load(path, builtInRules)
         : const PreflightConfig();

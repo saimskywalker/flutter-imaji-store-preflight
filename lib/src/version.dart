@@ -1,9 +1,8 @@
 /// The package version. Kept in sync with `pubspec.yaml` by a test.
-const packageVersion = '0.1.2';
+const packageVersion = '0.2.0';
 
 /// The package name, as published on pub.dev.
-const packageName = 'imaji_store_preflight';
+const packageName = 'storehound';
 
 /// Where the project lives.
-const repositoryUrl =
-    'https://github.com/saimskywalker/flutter-imaji-store-preflight';
+const repositoryUrl = 'https://github.com/saimskywalker/storehound';

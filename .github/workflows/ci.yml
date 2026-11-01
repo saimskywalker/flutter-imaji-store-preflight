@@ -33,9 +33,9 @@ jobs:
         run: dart pub publish --dry-run
       - name: run against the fixtures
         run: |
-          dart run imaji_store_preflight --project test/fixtures/clean_app
-          dart run imaji_store_preflight --project test/fixtures/rejected_app --sarif --output rejected.sarif || test $? -eq 1
+          dart run storehound --project test/fixtures/clean_app
+          dart run storehound --project test/fixtures/rejected_app --sarif --output rejected.sarif || test $? -eq 1
       - name: production-shaped fixture has no findings
         run: |
-          dart run imaji_store_preflight --project test/fixtures/production_app --fail-on info --today 2026-10-01 --brief --no-color > production.txt
+          dart run storehound --project test/fixtures/production_app --fail-on info --today 2026-10-01 --brief --no-color > production.txt
           diff -u test/fixtures/production_app.golden.txt production.txt

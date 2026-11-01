@@ -3,7 +3,7 @@
 //   dart run example/main.dart path/to/flutter_app
 import 'dart:io';
 
-import 'package:imaji_store_preflight/imaji_store_preflight.dart';
+import 'package:storehound/storehound.dart';
 
 void main(List<String> args) {
   final root = args.isEmpty ? '.' : args.first;

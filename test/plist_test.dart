@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:imaji_store_preflight/src/plist.dart';
+import 'package:storehound/src/plist.dart';
 import 'package:test/test.dart';
 
 import 'support/fixtures.dart';
