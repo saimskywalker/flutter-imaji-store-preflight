@@ -133,6 +133,16 @@ including how `android-target-sdk` behaves on a Dart-only runner.
 `imaji_store_preflight --explain <rule-id>` prints the full why, fix, options
 and documentation links for one rule.
 
+## Is it noisy on a real app?
+
+It should not be. CI runs it with `--fail-on info` on
+[a production-shaped fixture](https://github.com/saimskywalker/flutter-imaji-store-preflight/tree/main/test/fixtures/production_app)
+(two flavors, SwiftPM only, AGP 9, separate Debug and Release entitlements,
+a large commented `Info.plist`) and expects no findings at all, and the
+tests change one thing at a time in it to check that each mistake is still
+caught. If it reports something on your app that is not a real problem,
+please open an issue with an anonymised copy of the lines involved.
+
 ## Documentation
 
 - [Rules and the store messages they prevent](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/doc/rules.md), including planned rules

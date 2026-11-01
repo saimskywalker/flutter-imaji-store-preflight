@@ -290,6 +290,109 @@ $body''');
       );
     });
 
+    group('Debug and Release entitlements side by side', () {
+      const debug = 'ios/Runner/RunnerDebug.entitlements';
+      const release = 'ios/Runner/RunnerRelease.entitlements';
+      const pbx = 'ios/Runner.xcodeproj/project.pbxproj';
+      final aps = plist(
+        '<key>aps-environment</key><string>development</string>',
+      );
+
+      // Object ids are not read, so every configuration reuses one.
+      String configuration(String name, [String? entitlements]) =>
+          '''
+		AC0000000000000000000001 /* $name */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				${entitlements == null ? '' : 'CODE_SIGN_ENTITLEMENTS = $entitlements;'}
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.fixture;
+			};
+			name = $name;
+		};''';
+
+      String project(List<String> configurations) =>
+          '// !\$*UTF8*\$!\n{\n\tobjects = {\n'
+          '${configurations.join('\n')}\n\t};\n}\n';
+
+      Map<String, String> files(String pbxText, {bool releaseHasKey = false}) =>
+          {
+            info: infoPlist(),
+            debug: aps,
+            release: releaseHasKey ? aps : plist(''),
+            pbx: pbxText,
+            'pubspec.lock': lockOf(['firebase_messaging']),
+          };
+
+      test('passes when the Release file declares it too', () {
+        final text = project([
+          configuration('Debug', 'Runner/RunnerDebug.entitlements'),
+          configuration('Release', 'Runner/RunnerRelease.entitlements'),
+        ]);
+        expect(runRule(rule, files(text, releaseHasKey: true)), isEmpty);
+      });
+
+      test('warns when only the Debug file declares it', () {
+        final text = project([
+          configuration('Debug', 'Runner/RunnerDebug.entitlements'),
+          configuration('Release', 'Runner/RunnerRelease.entitlements'),
+          configuration(
+            'Release-prod',
+            r'$(SRCROOT)/Runner/RunnerRelease.entitlements',
+          ),
+          configuration('Profile', 'Runner/RunnerRelease.entitlements'),
+        ]);
+        expect(runRule(rule, files(text)), [
+          isFinding(
+            severity: Severity.warning,
+            path: release,
+            message: allOf(
+              contains('Release, Release-prod configurations'),
+              contains('only $debug has it'),
+            ),
+          ),
+        ]);
+      });
+
+      test(r'expands $(CONFIGURATION) in the path', () {
+        final text = project([
+          configuration(
+            'Debug',
+            r'"Runner/Runner$(CONFIGURATION).entitlements"',
+          ),
+          configuration(
+            'Release',
+            r'"Runner/Runner$(CONFIGURATION).entitlements"',
+          ),
+        ]);
+        expect(runRule(rule, files(text)), [isFinding(path: release)]);
+      });
+
+      test('warns when no Release configuration signs with entitlements', () {
+        final text = project([
+          configuration('Debug', 'Runner/RunnerDebug.entitlements'),
+          configuration('Release'),
+        ]);
+        expect(runRule(rule, files(text, releaseHasKey: true)), [
+          isFinding(
+            path: pbx,
+            message: contains('Only the Debug configuration'),
+          ),
+        ]);
+      });
+
+      test('stays quiet when the Release path cannot be resolved', () {
+        final text = project([
+          configuration('Debug', 'Runner/RunnerDebug.entitlements'),
+          configuration('Release', r'$(ENTITLEMENTS_DIR)/Release.entitlements'),
+        ]);
+        expect(runRule(rule, files(text)), isEmpty);
+      });
+
+      test('without an Xcode project the union of files counts', () {
+        expect(runRule(rule, files('')..remove(pbx)), isEmpty);
+      });
+    });
+
     test('fails an invalid aps-environment value', () {
       expect(
         runRule(rule, {

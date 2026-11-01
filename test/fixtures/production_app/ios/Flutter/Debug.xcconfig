@@ -1,0 +1,4 @@
+// SwiftPM only: no CocoaPods include. Flavor values come from
+// config/<flavor>/Flavor.xcconfig, chosen by scripts/select_flavor.sh.
+#include "Generated.xcconfig"
+#include? "../config/current/Flavor.xcconfig"

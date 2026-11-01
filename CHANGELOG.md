@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- `push-entitlement` reads `CODE_SIGN_ENTITLEMENTS` from the Xcode project
+  when Debug and Release sign with different entitlements files: a Release
+  file without `aps-environment` is reported even when the Debug file has
+  it, and so is a project where only Debug configurations sign with
+  entitlements.
+- `android-target-sdk` and `android-16kb-page-size` ignore commented-out
+  lines in Gradle scripts, so `// targetSdk = 34` above the real value is no
+  longer reported.
+- A production-shaped test fixture (flavors, SwiftPM only, AGP 9, Debug and
+  Release entitlements, a large commented `Info.plist`) that CI checks with
+  `--fail-on info`.
 - `purpose-string-missing` reports keys for protected APIs that a bundled
   native SDK only references (ITMS-90683 is a static check), listed with the
   new `linked_by_plugin` option or the new `linkedApiReferences` table (empty
