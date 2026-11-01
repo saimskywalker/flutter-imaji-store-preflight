@@ -237,6 +237,15 @@ class Project {
   /// Whether [package] is linked into the app.
   bool links(String package) => linkedPackages.contains(package);
 
+  /// Whether [package] is linked into the app as one of its own
+  /// `dependencies:` rather than pulled in by another package. Without a lock
+  /// file every linked package is direct.
+  bool linksDirectly(String package) {
+    if (!links(package)) return false;
+    final kind = lockedPackages?[package];
+    return kind == null || kind != DependencyKind.transitive;
+  }
+
   /// The Flutter SDK root, from `.dart_tool/package_config.json`'s
   /// `flutterRoot` or the `FLUTTER_ROOT` environment variable.
   late final String? flutterRoot = () {

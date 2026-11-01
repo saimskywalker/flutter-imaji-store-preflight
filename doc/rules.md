@@ -12,7 +12,7 @@ Planned rules link the issue that tracks them.
 | Store message or rejection | Caught by | Related upstream threads |
 |---|---|---|
 | ITMS-90683: Missing purpose string in Info.plist, for a plugin you use (`image_picker`, `camera`, `geolocator`, `local_auth`, …) | `purpose-string-missing` | |
-| ITMS-90683 for an API your app never calls, referenced by a dependency | planned: [#12](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/12), [#25](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/25) | [flutter/flutter#21941](https://github.com/flutter/flutter/issues/21941) |
+| ITMS-90683 for an API your app never calls, referenced by a dependency | `purpose-string-missing` with `linked_by_plugin` (built-in SDK rows and the SwiftPM case planned: [#25](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/25), [#12](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/12)) | [flutter/flutter#21941](https://github.com/flutter/flutter/issues/21941) |
 | Guideline 5.1.1(ii): the purpose string does not explain how the app uses the data | `purpose-string-quality` | |
 | ITMS-91053: Missing API declaration: your app's own privacy manifest is missing, not in Copy Bundle Resources, or uses a value Apple does not define | `privacy-manifest-present`, `privacy-manifest-values` | [flutter/flutter#145269](https://github.com/flutter/flutter/issues/145269), [flutter/flutter#143232](https://github.com/flutter/flutter/issues/143232) |
 | ITMS-91053 for required-reason APIs called from FFI or native assets | planned: [#17](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/17) | [flutter/flutter#147186](https://github.com/flutter/flutter/issues/147186), [flutter/flutter#140966](https://github.com/flutter/flutter/issues/140966) |
@@ -36,8 +36,8 @@ Planned rules link the issue that tracks them.
 | `privacy-manifest-tracking` | `NSPrivacyTracking` agrees with each entry's Tracking flag and with `NSPrivacyTrackingDomains` | A manifest that contradicts itself and the privacy label |
 | `privacy-manifest-sdk-data` | Collected data covers what linked SDKs (Firebase, AdMob, StoreKit, Sentry, …) collect, read from `pubspec.lock` | "Collects nothing" next to an analytics SDK, a label/manifest mismatch reviewers flag |
 | `tracking-usage-description` | `NSUserTrackingUsageDescription` exists exactly when `PrivacyInfo.xcprivacy` declares tracking; warns when `app_tracking_transparency` is linked without it | App Store Connect refusing "Add for Review"; an ATT request that terminates the app |
-| `purpose-string-missing` | Plugins that touch the camera, microphone, photos, location, contacts, Face ID… have their `NS…UsageDescription`; Always location also has When-In-Use | ITMS-90683 "Missing purpose string"; a crash at the first permission request |
-| `purpose-string-quality` | Purpose strings name a feature and give an example instead of restating the permission | Guideline 5.1.1(ii) rejection ("needs camera access") |
+| `purpose-string-missing` | Plugins that touch the camera, microphone, photos, location, contacts, Face ID… have their `NS…UsageDescription`; Always location also has When-In-Use; protected APIs a bundled SDK only references (`linked_by_plugin`) have their key too, both location keys for a CoreLocation reference | ITMS-90683 "Missing purpose string", also for an API the app never calls; a crash at the first permission request |
+| `purpose-string-quality` | Purpose strings name a feature and give an example instead of restating the permission; a string for a key the app does not use says so and why the key is there (recognised by its wording or listed under `linked_only`), and is an error while a plugin that requests the permission is a direct dependency | Guideline 5.1.1(ii) rejection ("needs camera access"); a "not used" string users see in a real permission prompt |
 | `background-modes-justified` | Every `UIBackgroundModes` entry is a mode Apple defines and has a justification recorded under `allow`: an error when no linked plugin uses the mode, a warning when one plausibly does; `processing` also needs `BGTaskSchedulerPermittedIdentifiers` | Guideline 2.5.4 rejection ("unable to locate any features that require persistent audio") |
 | `export-options-build-number` | Every `ExportOptions*.plist` with method `app-store` / `app-store-connect` sets `manageAppVersionAndBuildNumber` to false (it defaults to YES) | Xcode silently bumping `CFBundleVersion` at export |
 | `bundle-localizations` | `CFBundleLocalizations` matches your ARB locales | Store listing and system prompts stuck in one language, or a listing that claims a language you don't ship |
@@ -62,10 +62,17 @@ purpose-string-missing — Linked plugins have the purpose strings they need
   resource without its Info.plist purpose string (ITMS-90683, "Missing purpose
   string"), and iOS terminates the app the first time it asks for a permission
   whose string is missing. Neither shows up in a simulator run that never
-  reaches the permission prompt.
+  reaches the permission prompt. The upload check is static: a protected API
+  that a bundled native SDK only references (linked, never requested) needs its
+  key too, and a CoreLocation reference usually includes the Always
+  authorization API, so both location keys are asked for.
   fix: Add the key to ios/Runner/Info.plist with a sentence that names the
-  feature and gives an example (see `purpose-string-quality`). Extend the plugin
-  table with the `required_by_plugin` option.
+  feature and gives an example (see `purpose-string-quality`). When a dependency
+  only references the API, add the key anyway with a sentence saying the app
+  does not use the resource and why the key is present (see
+  `purpose-string-quality` -> `linked_only`); deleting it only fails the next
+  upload. Extend the plugin table with the `required_by_plugin` option, and
+  record SDKs that only reference an API with `linked_by_plugin`.
   docs: https://developer.apple.com/documentation/uikit/requesting-access-to-protected-resources
 ```
 
