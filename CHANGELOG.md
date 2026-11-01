@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.2
 
 - pubspec description mentions entitlements and CI.
 - README: a GitHub Actions job with SARIF upload and the exit codes, so the

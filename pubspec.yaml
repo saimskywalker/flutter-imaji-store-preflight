@@ -3,7 +3,7 @@ description: >-
   Catch App Store and Google Play rejections in your Flutter project before
   review. A Dart CLI that lints Info.plist, privacy manifests, entitlements and
   AndroidManifest in CI.
-version: 0.1.1
+version: 0.1.2
 repository: https://github.com/saimskywalker/flutter-imaji-store-preflight
 issue_tracker: https://github.com/saimskywalker/flutter-imaji-store-preflight/issues
 topics:
