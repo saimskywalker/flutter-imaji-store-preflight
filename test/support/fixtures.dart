@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:imaji_store_preflight/imaji_store_preflight.dart';
 import 'package:path/path.dart' as p;
+import 'package:storehound/storehound.dart';
 import 'package:test/test.dart';
 
 /// A fixed date so deadline rules are deterministic.

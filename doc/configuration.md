@@ -3,10 +3,10 @@
 ## Command line
 
 ```text
-imaji_store_preflight [options] [project-dir]
+storehound [options] [project-dir]
 
 -p, --project=<dir>     Flutter project root to check (default ".")
--c, --config=<file>     Configuration file (default: imaji_store_preflight.yaml in the project)
+-c, --config=<file>     Configuration file (default: storehound.yaml in the project)
 -f, --format            text (default), json, sarif
     --sarif             Shorthand for --format sarif
 -o, --output=<file>     Write the report to a file; a one-line summary goes to stderr
@@ -32,7 +32,7 @@ locations (and SARIF annotations) point at the right files.
 
 ## Configuration
 
-Optional. Put `imaji_store_preflight.yaml` next to `pubspec.yaml`:
+Optional. Put `storehound.yaml` next to `pubspec.yaml`:
 
 ```yaml
 # Lowest severity that fails the run: error (default), warning, info, never.
@@ -105,7 +105,7 @@ code 2) with the line number, so a typo cannot silently switch a check off.
 ## Use it as a library
 
 ```dart
-import 'package:imaji_store_preflight/imaji_store_preflight.dart';
+import 'package:storehound/storehound.dart';
 
 void main() {
   final report = runPreflight('path/to/flutter_app');
@@ -114,5 +114,5 @@ void main() {
 ```
 
 `renderJson` (stable schema, `schemaVersion: 1`) and `renderSarif` are exported
-too, and `Rule` is the extension point; see [CONTRIBUTING.md](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/CONTRIBUTING.md).
+too, and `Rule` is the extension point; see [CONTRIBUTING.md](https://github.com/saimskywalker/storehound/blob/main/CONTRIBUTING.md).
 

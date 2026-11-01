@@ -1,4 +1,4 @@
-import 'package:imaji_store_preflight/imaji_store_preflight.dart';
+import 'package:storehound/storehound.dart';
 import 'package:test/test.dart';
 
 /// A configurable stand-in, so these tests do not depend on real rules.

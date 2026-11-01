@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:imaji_store_preflight/imaji_store_preflight.dart';
 import 'package:path/path.dart' as p;
+import 'package:storehound/storehound.dart';
 import 'package:test/test.dart';
 
 import 'support/fixtures.dart';
@@ -157,12 +157,23 @@ void main() {
 
   test('an invalid configuration exits 2 with the reason', () {
     final root = writeProject({
-      'imaji_store_preflight.yaml':
+      'storehound.yaml':
           'rules:\n  bundle-localizations:\n    enabled: false\n',
     });
     final result = run([root]);
     expect(result.code, ExitCodes.usage);
     expect(result.err, contains('reason'));
+    expect(result.err, contains('storehound.yaml:3'));
+  });
+
+  test('a configuration under the pre-rename name is still read', () {
+    final root = writeProject({
+      'imaji_store_preflight.yaml':
+          'rules:\n  bundle-localizations:\n    enabled: false\n',
+    });
+    final result = run([root]);
+    expect(result.code, ExitCodes.usage);
+    expect(result.err, contains('rename it to storehound.yaml'));
     expect(result.err, contains('imaji_store_preflight.yaml:3'));
   });
 
@@ -181,7 +192,7 @@ void main() {
   test('the executable runs end to end', () async {
     final result = await Process.run(Platform.resolvedExecutable, [
       'run',
-      'bin/imaji_store_preflight.dart',
+      'bin/storehound.dart',
       '--today',
       '2026-10-01',
       clean,

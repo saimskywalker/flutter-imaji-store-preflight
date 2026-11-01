@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:imaji_store_preflight/imaji_store_preflight.dart';
+import 'package:storehound/storehound.dart';
 
 Future<void> main(List<String> arguments) async {
   exitCode = runCli(arguments);

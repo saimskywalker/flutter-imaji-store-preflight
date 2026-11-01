@@ -1,6 +1,6 @@
-import 'package:imaji_store_preflight/imaji_store_preflight.dart';
-import 'package:imaji_store_preflight/src/data/linked_api_references.dart';
-import 'package:imaji_store_preflight/src/rules/purpose_strings.dart';
+import 'package:storehound/src/data/linked_api_references.dart';
+import 'package:storehound/src/rules/purpose_strings.dart';
+import 'package:storehound/storehound.dart';
 import 'package:test/test.dart';
 
 import '../support/fixtures.dart';

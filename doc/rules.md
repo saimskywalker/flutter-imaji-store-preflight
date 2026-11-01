@@ -1,7 +1,7 @@
 # Rules
 
-`imaji_store_preflight --list-rules` prints the rule list and
-`imaji_store_preflight --explain <rule-id>` prints the full why, fix, options
+`storehound --list-rules` prints the rule list and
+`storehound --explain <rule-id>` prints the full why, fix, options
 and documentation links for one rule.
 
 ## Problems this solves
@@ -12,20 +12,20 @@ Planned rules link the issue that tracks them.
 | Store message or rejection | Caught by | Related upstream threads |
 |---|---|---|
 | ITMS-90683: Missing purpose string in Info.plist, for a plugin you use (`image_picker`, `camera`, `geolocator`, `local_auth`, …) | `purpose-string-missing` | |
-| ITMS-90683 for an API your app never calls, referenced by a dependency | `purpose-string-missing` with `linked_by_plugin` (built-in SDK rows and the SwiftPM case planned: [#25](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/25), [#12](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/12)) | [flutter/flutter#21941](https://github.com/flutter/flutter/issues/21941) |
+| ITMS-90683 for an API your app never calls, referenced by a dependency | `purpose-string-missing` with `linked_by_plugin` (built-in SDK rows and the SwiftPM case planned: [#25](https://github.com/saimskywalker/storehound/issues/25), [#12](https://github.com/saimskywalker/storehound/issues/12)) | [flutter/flutter#21941](https://github.com/flutter/flutter/issues/21941) |
 | Guideline 5.1.1(ii): the purpose string does not explain how the app uses the data | `purpose-string-quality` | |
 | ITMS-91053: Missing API declaration: your app's own privacy manifest is missing, not in Copy Bundle Resources, or uses a value Apple does not define | `privacy-manifest-present`, `privacy-manifest-values` | [flutter/flutter#145269](https://github.com/flutter/flutter/issues/145269), [flutter/flutter#143232](https://github.com/flutter/flutter/issues/143232) |
-| ITMS-91053 for required-reason APIs called from FFI or native assets | planned: [#17](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/17) | [flutter/flutter#147186](https://github.com/flutter/flutter/issues/147186), [flutter/flutter#140966](https://github.com/flutter/flutter/issues/140966) |
-| ITMS-91061: Missing privacy manifest for a third-party SDK | planned: [#13](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/13) | [firebase/flutterfire#16937](https://github.com/firebase/flutterfire/issues/16937) |
+| ITMS-91053 for required-reason APIs called from FFI or native assets | planned: [#17](https://github.com/saimskywalker/storehound/issues/17) | [flutter/flutter#147186](https://github.com/flutter/flutter/issues/147186), [flutter/flutter#140966](https://github.com/flutter/flutter/issues/140966) |
+| ITMS-91061: Missing privacy manifest for a third-party SDK | planned: [#13](https://github.com/saimskywalker/storehound/issues/13) | [firebase/flutterfire#16937](https://github.com/firebase/flutterfire/issues/16937) |
 | Privacy manifest declares no collected data while Firebase, AdMob, Sentry or another known SDK is linked | `privacy-manifest-sdk-data` | |
 | App Store Connect refuses "Add for Review": `NSUserTrackingUsageDescription` present while no tracking is declared | `tracking-usage-description` | |
 | Guideline 2.5.4: "unable to locate any features that require persistent audio" | `background-modes-justified` | |
 | Missing Push Notification Entitlement, or pushes that never arrive, with a push SDK linked | `push-entitlement` | [flutter/flutter#14182](https://github.com/flutter/flutter/issues/14182) |
 | Google Play refuses an update below the target API level deadline | `android-target-sdk` | |
 | Google Play 16 KB page-size requirement (the build toolchain; prebuilt `.so` files need the built APK/AAB) | `android-16kb-page-size` | |
-| Google Play Photo and Video Permissions policy (`READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO`) | planned: [#10](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/10) | [flutter/flutter#173536](https://github.com/flutter/flutter/issues/173536), [flutter/flutter#171494](https://github.com/flutter/flutter/issues/171494) |
-| Google Play: manifest does not include the `AD_ID` permission | planned: [#18](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/18) | [googleads/googleads-mobile-flutter#922](https://github.com/googleads/googleads-mobile-flutter/issues/922) |
-| Google Play "edge-to-edge may not display for all users" warnings | planned: [#20](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/20) | [flutter/flutter#192921](https://github.com/flutter/flutter/issues/192921), [flutter/flutter#183372](https://github.com/flutter/flutter/issues/183372) |
+| Google Play Photo and Video Permissions policy (`READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO`) | planned: [#10](https://github.com/saimskywalker/storehound/issues/10) | [flutter/flutter#173536](https://github.com/flutter/flutter/issues/173536), [flutter/flutter#171494](https://github.com/flutter/flutter/issues/171494) |
+| Google Play: manifest does not include the `AD_ID` permission | planned: [#18](https://github.com/saimskywalker/storehound/issues/18) | [googleads/googleads-mobile-flutter#922](https://github.com/googleads/googleads-mobile-flutter/issues/922) |
+| Google Play "edge-to-edge may not display for all users" warnings | planned: [#20](https://github.com/saimskywalker/storehound/issues/20) | [flutter/flutter#192921](https://github.com/flutter/flutter/issues/192921), [flutter/flutter#183372](https://github.com/flutter/flutter/issues/183372) |
 
 ## All rules
 

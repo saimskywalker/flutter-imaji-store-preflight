@@ -1,7 +1,19 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
+Renamed from imaji_store_preflight. Same rules and CLI; the command is now
+`storehound`.
+
+- The configuration file is `storehound.yaml`. An existing
+  `imaji_store_preflight.yaml` is still read when `storehound.yaml` is absent,
+  with a note to rename it.
+- `dart pub global activate storehound` also installs an
+  `imaji_store_preflight` command for this release only; it will be removed
+  in the next minor release.
+- The library import is `package:storehound/storehound.dart`.
+- Reports name the tool `storehound`: the text summary, JSON `tool.name`, and
+  the SARIF driver `name` and `informationUri`.
 - `push-entitlement` reads `CODE_SIGN_ENTITLEMENTS` from the Xcode project
   when Debug and Release sign with different entitlements files: a Release
   file without `aps-environment` is reported even when the Debug file has

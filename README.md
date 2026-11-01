@@ -1,15 +1,15 @@
-# imaji_store_preflight
+# storehound
 
 Catch App Store and Google Play rejections in your Flutter project before you
 upload: one Dart command lints `Info.plist`, the privacy manifest,
 entitlements and `AndroidManifest.xml`, and fails CI on the mistakes that get
 builds refused.
 
-[![pub version](https://img.shields.io/pub/v/imaji_store_preflight.svg)](https://pub.dev/packages/imaji_store_preflight)
-[![pub points](https://img.shields.io/pub/points/imaji_store_preflight)](https://pub.dev/packages/imaji_store_preflight/score)
-[![pub likes](https://img.shields.io/pub/likes/imaji_store_preflight)](https://pub.dev/packages/imaji_store_preflight/score)
-[![CI](https://github.com/saimskywalker/flutter-imaji-store-preflight/actions/workflows/ci.yml/badge.svg)](https://github.com/saimskywalker/flutter-imaji-store-preflight/actions/workflows/ci.yml)
-[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/LICENSE)
+[![pub version](https://img.shields.io/pub/v/storehound.svg)](https://pub.dev/packages/storehound)
+[![pub points](https://img.shields.io/pub/points/storehound)](https://pub.dev/packages/storehound/score)
+[![pub likes](https://img.shields.io/pub/likes/storehound)](https://pub.dev/packages/storehound/score)
+[![CI](https://github.com/saimskywalker/storehound/actions/workflows/ci.yml/badge.svg)](https://github.com/saimskywalker/storehound/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/saimskywalker/storehound/blob/main/LICENSE)
 
 ## Why
 
@@ -27,21 +27,29 @@ runner, no build.
 ## Install
 
 ```bash
-dart pub global activate imaji_store_preflight
+dart pub global activate storehound
 ```
 
-Or pin it per project with `flutter pub add --dev imaji_store_preflight` and
-run `dart run imaji_store_preflight`.
+Or pin it per project with `flutter pub add --dev storehound` and
+run `dart run storehound`.
+
+### Coming from imaji_store_preflight
+
+This package was renamed. Replace `imaji_store_preflight` with `storehound` in
+`dev_dependencies` (or `dart pub global activate storehound`), run
+`storehound` instead of `imaji_store_preflight`, and rename
+`imaji_store_preflight.yaml` to `storehound.yaml`. Rules and options are
+unchanged.
 
 ## Quick start
 
 ```bash
 cd my_flutter_app
-imaji_store_preflight
+storehound
 ```
 
 If `~/.pub-cache/bin` is not on your `PATH`, run
-`dart pub global run imaji_store_preflight`. Exit code `0` means clean, `1`
+`dart pub global run storehound`. Exit code `0` means clean, `1`
 means findings at or above `--fail-on` (default `error`), `2` means a usage or
 configuration problem.
 
@@ -52,7 +60,7 @@ it is after `flutter pub add image_picker` and a one-line camera purpose
 string (`--brief` drops the why/fix text):
 
 ```text
-$ imaji_store_preflight --brief
+$ storehound --brief
 privacy-manifest-present — The app target ships a PrivacyInfo.xcprivacy
   warning  ios/Runner/Info.plist
     No privacy manifest at ios/Runner/PrivacyInfo.xcprivacy (or the path
@@ -95,19 +103,19 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: dart-lang/setup-dart@v1
-      - run: dart pub global activate imaji_store_preflight '^0.1.0'
-      - run: dart pub global run imaji_store_preflight --sarif --output preflight.sarif
+      - run: dart pub global activate storehound '^0.2.0'
+      - run: dart pub global run storehound --sarif --output preflight.sarif
       - uses: github/codeql-action/upload-sarif@v4
         if: always()           # upload even when the check fails the job
         with:
           sarif_file: preflight.sarif
-          category: imaji-store-preflight
+          category: storehound
 ```
 
 No macOS runner needed. Code scanning needs a public repository or GitHub
 Advanced Security; without it, drop the upload step and read the text output
 in the job log.
-[More on CI](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/doc/github-actions.md),
+[More on CI](https://github.com/saimskywalker/storehound/blob/main/doc/github-actions.md),
 including how `android-target-sdk` behaves on a Dart-only runner.
 
 ## What it checks
@@ -130,13 +138,13 @@ including how `android-target-sdk` behaves on a Dart-only runner.
 | `android-picker-queries` | `file_picker` without an `OPEN_DOCUMENT` `<queries>` entry |
 | `unreadable-file` | A config file that does not parse, so rules would silently pass |
 
-`imaji_store_preflight --explain <rule-id>` prints the full why, fix, options
+`storehound --explain <rule-id>` prints the full why, fix, options
 and documentation links for one rule.
 
 ## Is it noisy on a real app?
 
 It should not be. CI runs it with `--fail-on info` on
-[a production-shaped fixture](https://github.com/saimskywalker/flutter-imaji-store-preflight/tree/main/test/fixtures/production_app)
+[a production-shaped fixture](https://github.com/saimskywalker/storehound/tree/main/test/fixtures/production_app)
 (two flavors, SwiftPM only, AGP 9, separate Debug and Release entitlements,
 a large commented `Info.plist`) and expects no findings at all, and the
 tests change one thing at a time in it to check that each mistake is still
@@ -145,23 +153,23 @@ please open an issue with an anonymised copy of the lines involved.
 
 ## Documentation
 
-- [Rules and the store messages they prevent](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/doc/rules.md), including planned rules
-- [Command line, configuration and library use](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/doc/configuration.md)
-- [GitHub Actions with code scanning](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/doc/github-actions.md)
-- [FAQ, limitations and comparisons](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/doc/faq.md)
-- [pub.dev page](https://pub.dev/packages/imaji_store_preflight) and [API docs](https://pub.dev/documentation/imaji_store_preflight/latest/)
-- [CHANGELOG](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/CHANGELOG.md) and [issues](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues)
+- [Rules and the store messages they prevent](https://github.com/saimskywalker/storehound/blob/main/doc/rules.md), including planned rules
+- [Command line, configuration and library use](https://github.com/saimskywalker/storehound/blob/main/doc/configuration.md)
+- [GitHub Actions with code scanning](https://github.com/saimskywalker/storehound/blob/main/doc/github-actions.md)
+- [FAQ, limitations and comparisons](https://github.com/saimskywalker/storehound/blob/main/doc/faq.md)
+- [pub.dev page](https://pub.dev/packages/storehound) and [API docs](https://pub.dev/documentation/storehound/latest/)
+- [CHANGELOG](https://github.com/saimskywalker/storehound/blob/main/CHANGELOG.md) and [issues](https://github.com/saimskywalker/storehound/issues)
 
 ## Contributing
 
 The most useful contributions are a rejection you hit that no rule catches
 (open an issue with the anonymised reviewer wording or `ITMS-` code and the
 public Apple or Google documentation) and corrections to the data tables.
-[CONTRIBUTING.md](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/CONTRIBUTING.md)
+[CONTRIBUTING.md](https://github.com/saimskywalker/storehound/blob/main/CONTRIBUTING.md)
 explains how to add a rule; issues labelled
-[good first issue](https://github.com/saimskywalker/flutter-imaji-store-preflight/labels/good%20first%20issue)
+[good first issue](https://github.com/saimskywalker/storehound/labels/good%20first%20issue)
 are a good place to start. Questions and ideas that are not bugs go to
-[Discussions](https://github.com/saimskywalker/flutter-imaji-store-preflight/discussions).
+[Discussions](https://github.com/saimskywalker/storehound/discussions).
 
 ## Trademarks
 
@@ -172,4 +180,4 @@ used only to say which store rules a check is about.
 
 ## License
 
-MIT © saimskywalker. See [LICENSE](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/LICENSE).
+MIT © saimskywalker. See [LICENSE](https://github.com/saimskywalker/storehound/blob/main/LICENSE).

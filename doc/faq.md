@@ -10,7 +10,7 @@ It complements the checks you already have; it does not replace them.
   Android.
 - **[fastlane precheck](https://docs.fastlane.tools/actions/precheck/)**
   checks your App Store *metadata* (description, keywords, URLs) for
-  rejection-prone text. `imaji_store_preflight` checks the *configuration
+  rejection-prone text. `storehound` checks the *configuration
   files in your project*, so the two do not overlap.
 - **Google Play Console** tells you about target API level and 16 KB
   page-size problems when you upload a bundle. This tool tells you on the pull
@@ -29,15 +29,15 @@ app's behaviour, your store listing or your binary. Treat a clean run as
 **Does it read my dependencies' own privacy manifests or scan native code for
 required-reason APIs?** Not yet. It reads `pubspec.lock` to know which
 plugins are linked; checking their manifests and native code is planned in
-[#13](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/13)
+[#13](https://github.com/saimskywalker/storehound/issues/13)
 and
-[#17](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/17).
+[#17](https://github.com/saimskywalker/storehound/issues/17).
 
 **Flavors, app extensions, monorepos?** Each run checks one `Info.plist`, one
 privacy manifest and one `AndroidManifest.xml` (configurable under `paths`).
 Use `--project` for each app in a monorepo; checking every flavor and
 extension in one run is planned in
-[#15](https://github.com/saimskywalker/flutter-imaji-store-preflight/issues/15).
+[#15](https://github.com/saimskywalker/storehound/issues/15).
 
 **My Info.plist is a binary plist.** Xcode reads both formats; this tool reads
 XML and says so clearly. Convert once with `plutil -convert xml1 Info.plist`;
