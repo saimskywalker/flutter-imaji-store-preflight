@@ -1,0 +1,23 @@
+{
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "acme-shop-dev",
+    "storage_bucket": "acme-shop-dev.example.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:fixturedev",
+        "android_client_info": {
+          "package_name": "com.example.acmeshop"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "fixture-not-a-real-key-dev"
+        }
+      ]
+    }
+  ],
+  "configuration_version": "1"
+}

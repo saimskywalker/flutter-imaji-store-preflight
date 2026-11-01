@@ -1,0 +1,7 @@
+{
+  "@@locale": "en",
+  "appTitle": "Acme Shop",
+  "@appTitle": {"description": "Shown in the app bar on the home screen."},
+  "cartEmpty": "Your cart is empty",
+  "scanBarcode": "Scan a barcode"
+}

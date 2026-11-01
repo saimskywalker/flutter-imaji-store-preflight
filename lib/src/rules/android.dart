@@ -137,6 +137,40 @@ final _flutterTarget = RegExp(
 );
 final _flutterDefault = RegExp(r'targetSdkVersion\s*(?::\s*Int\s*)?=\s*(\d+)');
 
+/// [source] (a Gradle script) with `//` and `/* */` comments replaced by
+/// spaces, line breaks kept, so a match's offset still gives its line in the
+/// original. A commented-out `targetSdk = 34` must not count.
+String _gradleCode(String source) {
+  final out = StringBuffer();
+  var i = 0;
+  while (i < source.length) {
+    final c = source[i];
+    if (c == '"' || c == "'") {
+      final start = i++;
+      while (i < source.length && source[i] != c && source[i] != '\n') {
+        if (source[i] == '\\') i++;
+        i++;
+      }
+      i = i < source.length && source[i] == c ? i + 1 : i;
+      out.write(source.substring(start, i.clamp(0, source.length)));
+    } else if (source.startsWith('//', i)) {
+      final end = source.indexOf('\n', i);
+      final stop = end == -1 ? source.length : end;
+      out.write(' ' * (stop - i));
+      i = stop;
+    } else if (source.startsWith('/*', i)) {
+      final end = source.indexOf('*/', i + 2);
+      final stop = end == -1 ? source.length : end + 2;
+      out.write(source.substring(i, stop).replaceAll(RegExp(r'[^\n]'), ' '));
+      i = stop;
+    } else {
+      out.write(c);
+      i++;
+    }
+  }
+  return out.toString();
+}
+
 /// Works out the app's `targetSdk` from its Gradle script, following
 /// `flutter.targetSdkVersion` into the Flutter SDK when it can.
 ResolvedTargetSdk resolveTargetSdk(Project project) {
@@ -144,7 +178,8 @@ ResolvedTargetSdk resolveTargetSdk(Project project) {
   if (gradle == null) {
     return const ResolvedTargetSdk(null, 'no android/app Gradle script');
   }
-  final literal = _literalTarget.firstMatch(gradle.text);
+  final code = _gradleCode(gradle.text);
+  final literal = _literalTarget.firstMatch(code);
   if (literal != null) {
     return ResolvedTargetSdk(
       int.parse(literal.group(1)!),
@@ -153,7 +188,7 @@ ResolvedTargetSdk resolveTargetSdk(Project project) {
       line: gradle.lineOf(literal),
     );
   }
-  final viaFlutter = _flutterTarget.firstMatch(gradle.text);
+  final viaFlutter = _flutterTarget.firstMatch(code);
   if (viaFlutter == null) {
     return ResolvedTargetSdk(
       null,
@@ -420,16 +455,19 @@ class Android16KbPageSizeRule extends Rule {
       (project.settingsGradle, _pluginsDsl),
       (project.rootGradle, _classpath),
     ]) {
-      final match = file == null ? null : pattern.firstMatch(file.text);
+      final match = file == null
+          ? null
+          : pattern.firstMatch(_gradleCode(file.text));
       if (match != null) {
         agpFile = file;
         agp = match;
         break;
       }
     }
+    final appCode = _gradleCode(app.text);
     if (agp != null &&
         _older(agp.group(1)!, const [8, 5, 1]) &&
-        !_legacyPackaging.hasMatch(app.text)) {
+        !_legacyPackaging.hasMatch(appCode)) {
       yield finding(
         'Android Gradle Plugin ${agp.group(1)} is older than 8.5.1, the '
         'version needed to 16 KB zip-align uncompressed native libraries.',
@@ -437,10 +475,10 @@ class Android16KbPageSizeRule extends Rule {
         line: agpFile.lineOf(agp),
       );
     }
-    final ndk = _ndk.firstMatch(app.text);
+    final ndk = _ndk.firstMatch(appCode);
     if (ndk != null &&
         int.parse(ndk.group(1)!) < 28 &&
-        app.text.contains('externalNativeBuild')) {
+        appCode.contains('externalNativeBuild')) {
       yield finding(
         'NDK ${ndk.group(1)} does not produce 16 KB-aligned libraries by '
         'default, and this module builds its own native code.',

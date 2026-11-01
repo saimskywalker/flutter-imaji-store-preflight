@@ -14,6 +14,7 @@ dart analyze --fatal-infos
 dart test
 dart pub publish --dry-run
 dart run imaji_store_preflight --project test/fixtures/rejected_app
+dart run imaji_store_preflight --project test/fixtures/production_app --fail-on info --today 2026-10-01
 ```
 
 CI runs these on the minimum supported SDK (3.8.0) and a pinned current

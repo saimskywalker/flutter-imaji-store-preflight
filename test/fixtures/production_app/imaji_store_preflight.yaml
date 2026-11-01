@@ -1,0 +1,19 @@
+# What a team records once and keeps in review: no rule is disabled and no
+# finding is ignored.
+fail_on: info
+
+rules:
+  background-modes-justified:
+    allow:
+      audio: >-
+        Open any product with an audio guide, press play and lock the device:
+        the guide keeps playing with lock-screen controls.
+      remote-notification: >-
+        Silent pushes refresh the status of an order in the Orders tab, for
+        example when a parcel is handed to the courier.
+  purpose-string-missing:
+    linked_by_plugin:
+      # The card SDK bundled by our acme_payments package references
+      # CoreLocation (seen with nm -u on a release build); the app never
+      # requests location.
+      acme_payments: [NSLocationWhenInUseUsageDescription]

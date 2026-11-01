@@ -1,6 +1,9 @@
+import 'package:path/path.dart' as p;
+
 import '../data/apple_privacy.dart';
 import '../data/plugin_requirements.dart';
 import '../finding.dart';
+import '../project.dart';
 import '../rule.dart';
 
 /// Every `UIBackgroundModes` entry has a feature a reviewer can find.
@@ -315,8 +318,11 @@ class PushEntitlementRule extends Rule {
   @override
   String get fix =>
       'In Xcode, Runner > Signing & Capabilities > + Capability > Push '
-      'Notifications. That writes `aps-environment` into the entitlements '
-      'file; the value is rewritten to `production` at App Store export.';
+      'Notifications, with the "All" tab selected so every configuration '
+      'gets it. That writes `aps-environment` into the entitlements file; '
+      'the value is rewritten to `production` at App Store export. When '
+      'Debug and Release sign with different files (`CODE_SIGN_ENTITLEMENTS` '
+      'per configuration), the Release file needs the key too.';
 
   @override
   List<String> get docs => const [
@@ -360,13 +366,108 @@ class PushEntitlementRule extends Rule {
       }
     }
     if (reasons.isEmpty) return;
-    if (project.entitlements.any((f) => f.root.has(key))) return;
-    yield finding(
-      'No entitlements file declares `$key`, but ${reasons.join(', ')} '
-      'expect${reasons.length == 1 ? 's' : ''} push notifications.',
-      path: project.entitlements.isEmpty
-          ? plist.path
-          : project.entitlements.first.path,
-    );
+    final expect =
+        '${reasons.join(', ')} expect${reasons.length == 1 ? 's' : ''} push '
+        'notifications';
+    final declaring = [
+      for (final f in project.entitlements)
+        if (f.root.has(key)) f.path,
+    ];
+    if (declaring.isEmpty) {
+      yield finding(
+        'No entitlements file declares `$key`, but $expect.',
+        path: project.entitlements.isEmpty
+            ? plist.path
+            : project.entitlements.first.path,
+      );
+      return;
+    }
+
+    // Some file declares it. A store build signs with the file its Release
+    // configuration names, which may not be that one.
+    final pbx = project.xcodeProject;
+    if (pbx == null) return;
+    final loaded = {for (final f in project.entitlements) f.path: f};
+    final signed = entitlementsByConfiguration(pbx);
+    final release = [
+      for (final (config, path) in signed)
+        if (_release.hasMatch(config)) (config, path),
+    ];
+    final withoutKey = <String, List<String>>{};
+    for (final (config, path) in release) {
+      final file = path == null ? null : loaded[path];
+      if (file != null && !file.root.has(key)) {
+        withoutKey.putIfAbsent(file.path, () => []).add(config);
+      }
+    }
+    for (final MapEntry(key: path, value: configs) in withoutKey.entries) {
+      yield finding(
+        '$path signs the ${configs.join(', ')} '
+        'configuration${configs.length == 1 ? '' : 's'} and has no `$key` '
+        '(only ${declaring.join(', ')} ${declaring.length == 1 ? 'has' : 'have'} '
+        'it), so App Store and TestFlight builds never get a push token; '
+        '$expect.',
+        path: path,
+      );
+    }
+    final debugOnly = [
+      for (final (config, path) in signed)
+        if (!_release.hasMatch(config) && declaring.contains(path)) config,
+    ];
+    if (release.isEmpty && debugOnly.isNotEmpty) {
+      yield finding(
+        'Only the ${debugOnly.join(', ')} configuration'
+        '${debugOnly.length == 1 ? '' : 's'} sign${debugOnly.length == 1 ? 's' : ''} '
+        'with an entitlements file; no Release configuration sets '
+        '`CODE_SIGN_ENTITLEMENTS`, so App Store and TestFlight builds carry '
+        'no `$key` and never get a push token; $expect.',
+        path: pbx.path,
+      );
+    }
   }
+
+  static final _release = RegExp('release', caseSensitive: false);
+}
+
+final _buildConfiguration = RegExp(
+  r'isa\s*=\s*XCBuildConfiguration\s*;(.*?)\bname\s*=\s*"?([^";]+?)"?\s*;',
+  dotAll: true,
+);
+final _codeSignEntitlements = RegExp(
+  r'"?CODE_SIGN_ENTITLEMENTS(?:\[[^\]]*\])?"?\s*=\s*"?([^";]+?)"?\s*;',
+);
+final _buildSetting = RegExp(r'\$[({]([A-Za-z_]+)[)}]');
+
+/// The entitlements file each build configuration in [pbx] that sets
+/// `CODE_SIGN_ENTITLEMENTS` signs with, as (configuration name,
+/// project-relative path), in file order.
+///
+/// Values are relative to `ios/`, where the Xcode project lives.
+/// `$(SRCROOT)`, `$(PROJECT_DIR)` and `$(CONFIGURATION)` are expanded; a
+/// value using any other build setting cannot be resolved without Xcode and
+/// gives a `null` path.
+List<(String, String?)> entitlementsByConfiguration(TextFile pbx) {
+  final result = <(String, String?)>[];
+  for (final block in _buildConfiguration.allMatches(pbx.text)) {
+    final config = block.group(2)!.trim();
+    final setting = _codeSignEntitlements.firstMatch(block.group(1)!);
+    if (setting == null) continue;
+    var unresolved = false;
+    final value = setting.group(1)!.trim().replaceAllMapped(_buildSetting, (m) {
+      switch (m.group(1)) {
+        case 'SRCROOT' || 'PROJECT_DIR':
+          return '.';
+        case 'CONFIGURATION':
+          return config;
+        default:
+          unresolved = true;
+          return m.group(0)!;
+      }
+    });
+    result.add((
+      config,
+      unresolved ? null : p.posix.normalize(p.posix.join('ios', value)),
+    ));
+  }
+  return result;
 }

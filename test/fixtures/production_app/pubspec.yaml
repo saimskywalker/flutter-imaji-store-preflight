@@ -1,0 +1,38 @@
+name: acme_shop
+description: Synthetic production-shaped fixture (see test/fixtures/README.md).
+publish_to: none
+version: 3.14.0+3140
+
+environment:
+  sdk: ^3.8.0
+  flutter: ">=3.44.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  acme_payments:
+    path: packages/acme_payments
+  audio_service: ^0.18.0
+  file_picker: ^10.3.0
+  firebase_analytics: ^12.0.0
+  firebase_core: ^4.1.0
+  firebase_crashlytics: ^5.0.0
+  firebase_messaging: ^16.0.0
+  intl: any
+  just_audio: ^0.10.0
+  local_auth: ^2.3.0
+  mobile_scanner: ^7.0.0
+  shared_preferences: ^2.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+  config:
+    enable-swift-package-manager: true

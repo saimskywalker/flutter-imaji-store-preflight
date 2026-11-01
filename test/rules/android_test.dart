@@ -184,6 +184,33 @@ void main() {
       );
     });
 
+    test('ignores commented-out declarations', () {
+      final script = gradle('36').replaceFirst(
+        '        targetSdk = 36',
+        '        // targetSdk = 34 until the 2026 deadline\n'
+            '        /* targetSdk = 35 */ targetSdk = 36',
+      );
+      expect(runRule(rule, {appGradle: script}), isEmpty);
+      expect(
+        runRule(rule, {
+          appGradle: script.replaceFirst('targetSdk = 36', 'targetSdk = 33'),
+        }),
+        [isFinding(line: 12, message: contains('targetSdk is 33'))],
+      );
+    });
+
+    test('a // inside a string is not a comment', () {
+      expect(
+        runRule(rule, {
+          appGradle: gradle('34').replaceFirst(
+            'minSdk = 24',
+            'manifestPlaceholders["u"] = "https://x"',
+          ),
+        }),
+        [isFinding(message: contains('targetSdk is 34'))],
+      );
+    });
+
     test('reads Groovy scripts', () {
       expect(
         runRule(rule, {
@@ -280,6 +307,26 @@ void main() {
             message: contains('8.3.2'),
           ),
         ],
+      );
+    });
+
+    test('ignores a commented-out plugin version or NDK', () {
+      expect(
+        runRule(rule, {
+          appGradle: gradle(
+            '36',
+            extra:
+                '    // ndkVersion = "27.0.12077973"\n'
+                '    ndkVersion = "28.2.13676358"\n'
+                '    externalNativeBuild { cmake { path = file("CMakeLists.txt") } }',
+          ),
+          settingsGradle: settings('9.0.1').replaceFirst(
+            '    id("com.android.application")',
+            '    // id("com.android.application") version "8.3.2" apply false\n'
+                '    id("com.android.application")',
+          ),
+        }),
+        isEmpty,
       );
     });
 
