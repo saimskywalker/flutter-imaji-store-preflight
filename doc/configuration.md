@@ -70,10 +70,15 @@ rules:
   privacy-manifest-sdk-data:
     sdk_data_types:         # extend or override the SDK -> data type table
       my_analytics_plugin: [ProductInteraction, DeviceID]
+  purpose-string-missing:
+    linked_by_plugin:       # SDKs whose binary references an API the app never requests
+      my_calling_plugin: [NSMotionUsageDescription]
   purpose-string-quality:
     min_words: 8
     app_names: [MyApp]
     extra_example_markers: ["like"]
+    linked_only:            # keys only there for a referenced API, checked by hand
+      NSMotionUsageDescription: "Referenced by the calling SDK; never requested."
 
 # Accept specific findings. A reason is REQUIRED, and shows in every report.
 ignore:
@@ -91,8 +96,8 @@ code 2) with the line number, so a typo cannot silently switch a check off.
 |---|---|
 | `privacy-manifest-values` | `extra_data_types`, `extra_purposes`, `extra_api_reasons` (category → reasons) |
 | `privacy-manifest-sdk-data` | `sdk_data_types` (package → data types; `[]` disables a built-in entry) |
-| `purpose-string-missing` | `required_by_plugin` (package → Info.plist keys) |
-| `purpose-string-quality` | `min_words`, `require_example`, `app_names`, `extra_example_markers` |
+| `purpose-string-missing` | `required_by_plugin` (package → Info.plist keys it requests), `linked_by_plugin` (package → Info.plist keys its binary only references) |
+| `purpose-string-quality` | `min_words`, `require_example`, `app_names`, `extra_example_markers`, `extra_unused_markers`, `linked_only` (Info.plist key → why it is there) |
 | `background-modes-justified` | `allow` (mode → justification), `extra_evidence` (mode → packages) |
 | `android-picker-queries` | `plugins` (extra file-picker packages) |
 | `android-target-sdk` | `target_sdk`, `deadlines` (`api`, `from`), `warn_days` |

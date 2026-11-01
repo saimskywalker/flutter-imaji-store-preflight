@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- `purpose-string-missing` reports keys for protected APIs that a bundled
+  native SDK only references (ITMS-90683 is a static check), listed with the
+  new `linked_by_plugin` option or the new `linkedApiReferences` table (empty
+  until a row has binary evidence). A CoreLocation reference asks for both
+  `NSLocationWhenInUseUsageDescription` and
+  `NSLocationAlwaysAndWhenInUseUsageDescription`.
+- `purpose-string-quality` accepts an honest "not used" string (says the app
+  does not use the resource and why the key is present) without an example,
+  recognised by its wording (`extra_unused_markers` adds phrases) or listed
+  under the new `linked_only` option. Such a string is an error while a plugin
+  that requests the permission is a direct dependency, and a warning when that
+  plugin is transitive. "Not used." on its own is still an error.
+
 ## 0.1.2
 
 - pubspec description mentions entitlements and CI.
