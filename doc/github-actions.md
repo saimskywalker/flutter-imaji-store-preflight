@@ -13,11 +13,11 @@ jobs:
       contents: read
       security-events: write   # upload SARIF
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dart-lang/setup-dart@v1
       - run: dart pub global activate imaji_store_preflight '^0.1.0'
       - run: dart pub global run imaji_store_preflight --sarif --output preflight.sarif
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always()           # upload even when the check fails the job
         with:
           sarif_file: preflight.sarif

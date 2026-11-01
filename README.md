@@ -41,9 +41,9 @@ imaji_store_preflight
 ```
 
 If `~/.pub-cache/bin` is not on your `PATH`, run
-`dart pub global run imaji_store_preflight`. In CI, `--sarif --output
-preflight.sarif` turns findings into pull request annotations
-([GitHub Actions setup](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/doc/github-actions.md)).
+`dart pub global run imaji_store_preflight`. Exit code `0` means clean, `1`
+means findings at or above `--fail-on` (default `error`), `2` means a usage or
+configuration problem.
 
 ## Example output
 
@@ -76,6 +76,39 @@ purpose-string-quality — Purpose strings name a feature and give an example, n
 The exit code is `1`, so CI fails. Without `--brief` each finding also says
 why it matters, how to fix it, and links Apple's or Google's documentation.
 `--format json` and `--sarif` give the same findings in machine-readable form.
+
+## Run it in CI
+
+This job fails the build on errors and shows each finding as a code scanning
+annotation on the pull request:
+
+```yaml
+name: Store preflight
+on: [push, pull_request]
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # upload SARIF
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub global activate imaji_store_preflight '^0.1.0'
+      - run: dart pub global run imaji_store_preflight --sarif --output preflight.sarif
+      - uses: github/codeql-action/upload-sarif@v4
+        if: always()           # upload even when the check fails the job
+        with:
+          sarif_file: preflight.sarif
+          category: imaji-store-preflight
+```
+
+No macOS runner needed. Code scanning needs a public repository or GitHub
+Advanced Security; without it, drop the upload step and read the text output
+in the job log.
+[More on CI](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/doc/github-actions.md),
+including how `android-target-sdk` behaves on a Dart-only runner.
 
 ## What it checks
 
@@ -117,7 +150,8 @@ public Apple or Google documentation) and corrections to the data tables.
 [CONTRIBUTING.md](https://github.com/saimskywalker/flutter-imaji-store-preflight/blob/main/CONTRIBUTING.md)
 explains how to add a rule; issues labelled
 [good first issue](https://github.com/saimskywalker/flutter-imaji-store-preflight/labels/good%20first%20issue)
-are a good place to start.
+are a good place to start. Questions and ideas that are not bugs go to
+[Discussions](https://github.com/saimskywalker/flutter-imaji-store-preflight/discussions).
 
 ## Trademarks
 

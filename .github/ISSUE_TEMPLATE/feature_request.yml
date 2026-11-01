@@ -48,8 +48,7 @@ body:
     id: ai-tool
     attributes:
       label: If yes, which tool and model?
-      description: Required if you answered yes above.
-      placeholder: "e.g. Claude Code, Opus 5.5"
+      description: Required if you answered yes above, for example "Claude Code, Opus 5.5" or "Copilot, GPT-5".
   - type: checkboxes
     id: own-words
     attributes:

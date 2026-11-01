@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- pubspec description mentions entitlements and CI.
+- README: a GitHub Actions job with SARIF upload and the exit codes, so the
+  CI setup is on the pub.dev page; the Actions example uses
+  `actions/checkout@v6` and `github/codeql-action/upload-sarif@v4`.
+
 ## 0.1.1
 
 Documentation and rule text only; no rule logic or CLI behaviour changes.
