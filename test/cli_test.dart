@@ -178,6 +178,34 @@ checks:
       expect(noConfig.err, contains('no configuration file'));
     });
 
+    test('--list-rules adds the project checks with severity and reason', () {
+      final root = project();
+      final list = run(['--list-rules', '--project', root]);
+      expect(list.code, ExitCodes.ok, reason: list.err);
+      expect(list.out, contains('Project checks (from '));
+      expect(
+        list.out,
+        matches(
+          RegExp(r'check:no-backup +error +<application android:allowBackup>'),
+        ),
+      );
+      expect(list.out, contains('    Tokens live in shared preferences.'));
+      for (final rule in builtInRules) {
+        expect(list.out, contains(rule.id));
+      }
+
+      final none = run(['--list-rules', '--project', writeProject({})]);
+      expect(none.code, ExitCodes.ok);
+      expect(none.out, isNot(contains('Project checks')));
+
+      final bad = writeProject({
+        'storehound.yaml': checks.replaceFirst('"false"', 'false'),
+      });
+      final invalid = run(['--list-rules', bad]);
+      expect(invalid.code, ExitCodes.usage);
+      expect(invalid.err, contains('storehound.yaml:6'));
+    });
+
     test('a mistake in a check exits 2 with its line', () {
       final root = writeProject({
         'storehound.yaml': checks.replaceFirst('"false"', 'false'),

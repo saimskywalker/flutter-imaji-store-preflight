@@ -14,7 +14,7 @@ storehound [options] [project-dir]
     --today=YYYY-MM-DD  Date deadlines are measured against (reproducible runs)
     --brief             Text output without the why/fix explanations
     --[no-]color        Colour text output (default: when stdout is a terminal and NO_COLOR is unset)
-    --list-rules        List every rule
+    --list-rules        List every rule, then the project checks from the configuration
     --explain=<rule-id> Explain one rule, or a project check as check:<name>
     --version           Print the version
 -h, --help              Show the usage

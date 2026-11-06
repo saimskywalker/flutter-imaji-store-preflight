@@ -11,6 +11,8 @@
   it is missing). `ignore`, `rules` and `--explain check:<name>` accept it.
   A mistake in a check is a configuration error with its line (exit code 2).
 - The production-shaped fixture pins five values with `checks:`.
+- `--list-rules` also lists the project checks from the configuration file,
+  with their severity and reason.
 
 ## 0.2.0
 
