@@ -848,6 +848,19 @@ ignore:
       expect(report.suppressed.single.finding.ruleId, 'check:no-backup');
     });
 
+    test('rules can disable a check with a reason', () {
+      final report = runChecks('''
+$config
+rules:
+  check:no-backup:
+    enabled: false
+    reason: Backups are back on until the token moves to the keystore.
+''', files());
+      expect(report.findings.map((f) => f.ruleId), ['check:encryption-exempt']);
+      expect(report.disabled.single.rule.id, 'check:no-backup');
+      expect(report.disabled.single.reason, contains('keystore'));
+    });
+
     test('text, JSON and SARIF report the check with its file and line', () {
       final report = runChecks(config, files());
       final text = renderText(report);

@@ -177,6 +177,16 @@ manifest, or `<manifest>` when no element has that name. A check whose file
 does not exist is a finding too, so a moved file cannot switch it off
 silently. A check can be named in `ignore` (`rule: check:no-backup`) and under
 `rules:` like any rule, and `storehound --explain check:no-backup` prints it.
+To switch a check off for a while without deleting it, disable it under
+`rules:` with a reason, as for a built-in rule:
+
+```yaml
+rules:
+  check:no-backup:
+    enabled: false
+    reason: "Backups are back on until the token moves to the keystore."
+```
+
 Mistakes in a check (an unknown file or operator, a value of the wrong type,
 a missing `reason`) are configuration errors with the line number, exit
 code 2.

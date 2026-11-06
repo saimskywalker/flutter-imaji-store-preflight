@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0
+## Unreleased
 
 - Project checks: app-specific pins under `checks:` in `storehound.yaml`, for
   `Info.plist` keys (with nested keys) and `AndroidManifest.xml` attributes,
