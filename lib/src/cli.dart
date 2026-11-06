@@ -79,7 +79,13 @@ ArgParser _parser() => ArgParser(usageLineLength: 80)
         'Colour text output. Default: when stdout is a terminal and '
         'NO_COLOR is unset.',
   )
-  ..addFlag('list-rules', negatable: false, help: 'List every rule and exit.')
+  ..addFlag(
+    'list-rules',
+    negatable: false,
+    help:
+        'List every rule, and the project checks in the configuration, '
+        'and exit.',
+  )
   ..addOption(
     'explain',
     help:
@@ -126,10 +132,6 @@ int runCli(
     out.writeln('$packageName $packageVersion');
     return ExitCodes.ok;
   }
-  if (args.flag('list-rules')) {
-    out.writeln(renderRuleList(builtInRules));
-    return ExitCodes.ok;
-  }
   final explain = args.option('explain');
   if (explain != null) {
     for (final rule in builtInRules) {
@@ -153,6 +155,26 @@ int runCli(
     return ExitCodes.usage;
   }
   final root = p.normalize(p.join(cwd, projectArg));
+  if (args.flag('list-rules')) {
+    // Works anywhere; project checks are listed when a configuration exists.
+    final PreflightConfig config;
+    try {
+      config = _loadConfig(args.option('config'), cwd, root, err);
+    } on ConfigException catch (e) {
+      err.writeln('Invalid configuration: $e');
+      return ExitCodes.usage;
+    }
+    out.writeln(
+      renderRuleList(
+        builtInRules,
+        checks: config.checkRules,
+        checksSource: config.source == null
+            ? null
+            : p.relative(config.source!, from: cwd),
+      ),
+    );
+    return ExitCodes.ok;
+  }
   if (!Directory(root).existsSync()) {
     err.writeln('Project directory not found: $root');
     return ExitCodes.usage;
@@ -171,22 +193,7 @@ int runCli(
 
   PreflightConfig config;
   try {
-    final explicit = args.option('config');
-    var path = explicit != null
-        ? p.join(cwd, explicit)
-        : p.join(root, configFileName);
-    if (explicit == null && !File(path).existsSync()) {
-      final legacy = p.join(root, legacyConfigFileName);
-      if (File(legacy).existsSync()) {
-        err.writeln(
-          'Reading $legacyConfigFileName; rename it to $configFileName.',
-        );
-        path = legacy;
-      }
-    }
-    config = explicit != null || File(path).existsSync()
-        ? PreflightConfig.load(path, builtInRules)
-        : const PreflightConfig();
+    config = _loadConfig(args.option('config'), cwd, root, err);
   } on ConfigException catch (e) {
     err.writeln('Invalid configuration: $e');
     return ExitCodes.usage;
@@ -275,6 +282,32 @@ int runCli(
     out.write(rendered.endsWith('\n') ? rendered : '$rendered\n');
   }
   return report.failed ? ExitCodes.findings : ExitCodes.ok;
+}
+
+/// Loads `--config` ([explicit], relative to [cwd]) or the project's
+/// configuration file under [root], or returns the defaults when there is
+/// none. Throws [ConfigException] for an invalid file.
+PreflightConfig _loadConfig(
+  String? explicit,
+  String cwd,
+  String root,
+  StringSink err,
+) {
+  var path = explicit != null
+      ? p.join(cwd, explicit)
+      : p.join(root, configFileName);
+  if (explicit == null && !File(path).existsSync()) {
+    final legacy = p.join(root, legacyConfigFileName);
+    if (File(legacy).existsSync()) {
+      err.writeln(
+        'Reading $legacyConfigFileName; rename it to $configFileName.',
+      );
+      path = legacy;
+    }
+  }
+  return explicit != null || File(path).existsSync()
+      ? PreflightConfig.load(path, builtInRules)
+      : const PreflightConfig();
 }
 
 String _usage(ArgParser parser) =>

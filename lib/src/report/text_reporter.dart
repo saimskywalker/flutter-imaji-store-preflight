@@ -127,8 +127,13 @@ String _indent(String text, String prefix, {int width = 80}) {
   return out.join('\n');
 }
 
-/// Renders `--list-rules` output.
-String renderRuleList(List<Rule> rules) {
+/// Renders `--list-rules` output: [rules] by platform, then the project
+/// [checks] from the configuration file [checksSource], with their reasons.
+String renderRuleList(
+  List<Rule> rules, {
+  List<Rule> checks = const [],
+  String? checksSource,
+}) {
   final out = StringBuffer();
   for (final platform in RulePlatform.values) {
     final group = rules.where((r) => r.platform == platform).toList();
@@ -143,6 +148,22 @@ String renderRuleList(List<Rule> rules) {
         '  ${r.id.padRight(30)} ${r.defaultSeverity.name.padRight(8)}'
         ' ${r.title}',
       );
+    }
+    out.writeln();
+  }
+  if (checks.isNotEmpty) {
+    out.writeln(
+      checksSource == null
+          ? 'Project checks'
+          : 'Project checks (from $checksSource)',
+    );
+    for (final c in checks) {
+      out
+        ..writeln(
+          '  ${c.id.padRight(30)} ${c.defaultSeverity.name.padRight(8)}'
+          ' ${c.title}',
+        )
+        ..writeln(_indent(c.why, '    '));
     }
     out.writeln();
   }
