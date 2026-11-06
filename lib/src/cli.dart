@@ -9,6 +9,7 @@ import 'finding.dart';
 import 'report/machine_reporters.dart';
 import 'report/text_reporter.dart';
 import 'rules/all_rules.dart';
+import 'rules/project_checks.dart';
 import 'version.dart';
 
 /// Exit codes of the command-line tool.
@@ -81,7 +82,9 @@ ArgParser _parser() => ArgParser(usageLineLength: 80)
   ..addFlag('list-rules', negatable: false, help: 'List every rule and exit.')
   ..addOption(
     'explain',
-    help: 'Explain one rule (why it exists, how to fix it) and exit.',
+    help:
+        'Explain one rule (why it exists, how to fix it) and exit. '
+        'A project check is `check:<name>`.',
     valueHelp: 'rule-id',
   )
   ..addFlag('version', negatable: false, help: 'Print the version and exit.')
@@ -127,15 +130,19 @@ int runCli(
     out.writeln(renderRuleList(builtInRules));
     return ExitCodes.ok;
   }
-  if (args.option('explain') case final id?) {
+  final explain = args.option('explain');
+  if (explain != null) {
     for (final rule in builtInRules) {
-      if (rule.id == id) {
+      if (rule.id == explain) {
         out.writeln(renderExplain(rule));
         return ExitCodes.ok;
       }
     }
-    err.writeln('Unknown rule `$id`. Run --list-rules to see them all.');
-    return ExitCodes.usage;
+    // A project check lives in the configuration, which is loaded below.
+    if (!explain.startsWith(checkRulePrefix)) {
+      err.writeln('Unknown rule `$explain`. Run --list-rules to see them all.');
+      return ExitCodes.usage;
+    }
   }
 
   var projectArg = args.option('project')!;
@@ -184,11 +191,28 @@ int runCli(
     err.writeln('Invalid configuration: $e');
     return ExitCodes.usage;
   }
+  if (explain != null) {
+    for (final check in config.checkRules) {
+      if (check.id == explain) {
+        out.writeln(renderExplain(check));
+        return ExitCodes.ok;
+      }
+    }
+    final name = explain.substring(checkRulePrefix.length);
+    err.writeln(switch (config.source) {
+      null => 'Unknown check `$explain`: no configuration file was found.',
+      final source =>
+        'Unknown check `$explain`: $source has no `$name` '
+            'under `checks:`.',
+    });
+    return ExitCodes.usage;
+  }
   if (args.option('fail-on') case final failOn?) {
     config = PreflightConfig(
       rules: config.rules,
       ignores: config.ignores,
       paths: config.paths,
+      checkRules: config.checkRules,
       source: config.source,
       failOn: failOn == 'never' ? null : Severity.tryParse(failOn),
     );

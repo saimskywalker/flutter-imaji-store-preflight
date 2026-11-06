@@ -19,4 +19,5 @@ export 'src/report/text_reporter.dart'
     show renderExplain, renderRuleList, renderText;
 export 'src/rule.dart';
 export 'src/rules/all_rules.dart';
+export 'src/rules/project_checks.dart';
 export 'src/version.dart';

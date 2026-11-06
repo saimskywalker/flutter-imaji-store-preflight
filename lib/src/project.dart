@@ -173,6 +173,10 @@ class Project {
   /// `ios/Runner/Info.plist`.
   PlistFile? infoPlist;
 
+  /// Where [infoPlist] is read from (project-relative), whether or not it
+  /// exists.
+  late final String infoPlistPath;
+
   /// The app's privacy manifest.
   PlistFile? privacyManifest;
 
@@ -187,6 +191,10 @@ class Project {
 
   /// The main Android manifest.
   XmlFile? androidManifest;
+
+  /// Where [androidManifest] is read from (project-relative), whether or not
+  /// it exists.
+  late final String androidManifestPath;
 
   /// The app module's Gradle script.
   TextFile? appGradle;
@@ -267,7 +275,8 @@ class Project {
     pubspec = _yaml('pubspec.yaml');
     _loadLock();
 
-    infoPlist = _plist(paths.infoPlist ?? 'ios/Runner/Info.plist');
+    infoPlistPath = paths.infoPlist ?? 'ios/Runner/Info.plist';
+    infoPlist = _plist(infoPlistPath);
     privacyManifest = _plist(
       paths.privacyManifest ?? 'ios/Runner/PrivacyInfo.xcprivacy',
     );
@@ -281,7 +290,7 @@ class Project {
     }
     xcodeProject = _text('ios/Runner.xcodeproj/project.pbxproj');
 
-    final manifestPath =
+    final manifestPath = androidManifestPath =
         paths.androidManifest ?? 'android/app/src/main/AndroidManifest.xml';
     final manifestText = _read(manifestPath);
     if (manifestText != null) {

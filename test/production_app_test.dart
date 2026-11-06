@@ -140,7 +140,17 @@ void main() {
                 '\t\t<string>fetch</string>\n',
           ),
         }),
-        [isFinding(message: contains('`fetch`'))],
+        [
+          isFinding(message: contains('`fetch`')),
+          // The pinned list in the fixture's `checks:` catches it too.
+          isA<Finding>()
+              .having(
+                (f) => f.ruleId,
+                'ruleId',
+                'check:background-modes-pinned',
+              )
+              .having((f) => f.line, 'line', 1081),
+        ],
       );
     });
 
@@ -191,6 +201,57 @@ void main() {
           manifest: replace('intent.action.OPEN_DOCUMENT', 'intent.action.X'),
         }),
         [isFinding(message: contains('OPEN_DOCUMENT'))],
+      );
+    });
+
+    test('a project check: backups are switched on', () {
+      expect(
+        runMutated({
+          manifest: replace(
+            'android:allowBackup="false"',
+            'android:allowBackup="true"',
+          ),
+        }),
+        [
+          isA<Finding>()
+              .having((f) => f.ruleId, 'ruleId', 'check:no-backup')
+              .having((f) => f.path, 'path', manifest)
+              .having((f) => f.line, 'line', 23),
+        ],
+      );
+    });
+
+    test('a project check: a media permission is added', () {
+      expect(
+        runMutated({
+          manifest: replace(
+            '    <uses-permission android:name="android.permission.USE_BIOMETRIC" />\n',
+            '    <uses-permission android:name="android.permission.USE_BIOMETRIC" />\n'
+                '    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />\n',
+          ),
+        }),
+        [
+          isA<Finding>()
+              .having((f) => f.ruleId, 'ruleId', 'check:no-media-permissions')
+              .having((f) => f.line, 'line', 13),
+        ],
+      );
+    });
+
+    test('a project check: the encryption answer flips', () {
+      expect(
+        runMutated({
+          info: replace(
+            '\t<key>ITSAppUsesNonExemptEncryption</key>\n\t<false/>',
+            '\t<key>ITSAppUsesNonExemptEncryption</key>\n\t<true/>',
+          ),
+        }),
+        [
+          isA<Finding>()
+              .having((f) => f.ruleId, 'ruleId', 'check:encryption-exempt')
+              .having((f) => f.message, 'message', contains('is true'))
+              .having((f) => f.line, 'line', 61),
+        ],
       );
     });
 

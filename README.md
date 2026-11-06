@@ -141,6 +141,25 @@ including how `android-target-sdk` behaves on a Dart-only runner.
 `storehound --explain <rule-id>` prints the full why, fix, options
 and documentation links for one rule.
 
+### Your own checks
+
+Pins only your app cares about go under `checks:` in `storehound.yaml`, each
+with a reason, and are reported like any rule as `check:<name>`:
+
+```yaml
+checks:
+  no-backup:
+    file: android_manifest
+    element: application
+    attribute: android:allowBackup
+    equals: "false"
+    reason: "Tokens live in shared preferences."
+```
+
+They work on `Info.plist` keys and `AndroidManifest.xml` attributes; see
+[Project checks](https://github.com/saimskywalker/storehound/blob/main/doc/configuration.md#project-checks)
+for the operators.
+
 ## Is it noisy on a real app?
 
 It should not be. CI runs it with `--fail-on info` on

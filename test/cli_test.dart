@@ -136,6 +136,59 @@ void main() {
     expect(run(['--explain', 'nope']).code, ExitCodes.usage);
   });
 
+  group('project checks', () {
+    const checks = '''
+checks:
+  no-backup:
+    file: android_manifest
+    element: application
+    attribute: android:allowBackup
+    equals: "false"
+    reason: Tokens live in shared preferences.
+''';
+    String project() => writeProject({
+      'storehound.yaml': checks,
+      'android/app/src/main/AndroidManifest.xml':
+          '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n'
+          '  <application android:allowBackup="true" />\n'
+          '</manifest>\n',
+    });
+
+    test('a failing check exits 1 and names its file and line', () {
+      final result = run([project(), '--no-color']);
+      expect(result.code, ExitCodes.findings, reason: result.out);
+      expect(result.out, contains('check:no-backup'));
+      expect(result.out, contains('AndroidManifest.xml:2'));
+      expect(result.out, contains('Tokens live in shared preferences.'));
+    });
+
+    test('--explain check:<name> reads the configuration', () {
+      final root = project();
+      final explain = run(['--explain', 'check:no-backup', root]);
+      expect(explain.code, ExitCodes.ok, reason: explain.err);
+      expect(explain.out, contains('check:no-backup (error, android)'));
+      expect(explain.out, contains('Tokens live in shared preferences.'));
+
+      final unknown = run(['--explain', 'check:nope', root]);
+      expect(unknown.code, ExitCodes.usage);
+      expect(unknown.err, contains('has no `nope` under `checks:`'));
+
+      final noConfig = run(['--explain', 'check:nope', writeProject({})]);
+      expect(noConfig.code, ExitCodes.usage);
+      expect(noConfig.err, contains('no configuration file'));
+    });
+
+    test('a mistake in a check exits 2 with its line', () {
+      final root = writeProject({
+        'storehound.yaml': checks.replaceFirst('"false"', 'false'),
+      });
+      final result = run([root]);
+      expect(result.code, ExitCodes.usage);
+      expect(result.err, contains('storehound.yaml:6'));
+      expect(result.err, contains('attribute values are text'));
+    });
+  });
+
   test('--version and --help', () {
     expect(run(['--version']).out.trim(), '$packageName $packageVersion');
     final help = run(['--help']);

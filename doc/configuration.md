@@ -15,7 +15,7 @@ storehound [options] [project-dir]
     --brief             Text output without the why/fix explanations
     --[no-]color        Colour text output (default: when stdout is a terminal and NO_COLOR is unset)
     --list-rules        List every rule
-    --explain=<rule-id> Explain one rule
+    --explain=<rule-id> Explain one rule, or a project check as check:<name>
     --version           Print the version
 -h, --help              Show the usage
 ```
@@ -101,6 +101,97 @@ code 2) with the line number, so a typo cannot silently switch a check off.
 | `background-modes-justified` | `allow` (mode → justification), `extra_evidence` (mode → packages) |
 | `android-picker-queries` | `plugins` (extra file-picker packages) |
 | `android-target-sdk` | `target_sdk`, `deadlines` (`api`, `from`), `warn_days` |
+
+## Project checks
+
+Pins that only your app cares about, the kind usually kept as hand-written
+tests that parse `Info.plist` or `AndroidManifest.xml`, go under `checks:`.
+Each one is reported like a built-in rule, with the rule id `check:<name>`:
+
+```yaml
+checks:
+  encryption-exempt:
+    file: info_plist
+    key: ITSAppUsesNonExemptEncryption
+    equals: false
+    reason: "Export compliance is answered in App Store Connect; keeps each upload from asking."
+
+  background-modes-pinned:
+    file: info_plist
+    key: UIBackgroundModes
+    equals: [audio, remote-notification]
+    reason: "The modes App Review accepted. A new one needs review notes first."
+
+  ats-no-arbitrary-loads:
+    file: info_plist
+    key: NSAppTransportSecurity.NSAllowsArbitraryLoads   # a dot steps into a nested dictionary
+    absent_or_equals: false
+    reason: "All traffic is HTTPS."
+
+  no-backup:
+    file: android_manifest
+    element: application
+    attribute: android:allowBackup
+    equals: "false"
+    severity: warning
+    reason: "Tokens live in shared preferences."
+
+  no-media-permissions:
+    file: android_manifest
+    element: uses-permission
+    attribute: android:name
+    none_of: [android.permission.READ_MEDIA_IMAGES, android.permission.READ_MEDIA_VIDEO]
+    reason: "The app uses the system photo picker only."
+```
+
+| Key | Meaning |
+|---|---|
+| `file` | `info_plist` (`paths.info_plist`) or `android_manifest` (the main manifest, `paths.android_manifest`) |
+| `key` | Info.plist only. A top-level key, or a dotted path into nested dictionaries. For a key that contains dots, list the parts: `[NSAppTransportSecurity, NSExceptionDomains, example.com]` |
+| `element`, `attribute` | AndroidManifest only. Every element with that name, anywhere in the manifest, and the attribute's name as written, e.g. `android:allowBackup` |
+| `reason` | Required: why the value is pinned. Shown as the "why" in every report and in `--explain` |
+| `severity` | `error` (default), `warning` or `info` |
+
+Each check has exactly one operator:
+
+| Operator | Info.plist value | AndroidManifest attribute |
+|---|---|---|
+| `exists: true` | is present | at least one element sets it |
+| `absent: true` | is not present | no element sets it |
+| `equals: <value>` | is present and equal; a list equals an array with the same items in any order | every element sets it to the value |
+| `absent_or_equals: <value>` | is missing or equal | every element that sets it uses the value |
+| `not_equals: <value>` | is missing or different | no element sets it to the value |
+| `contains: [<values>]` | is an array that holds every listed value | the elements' values together hold every listed value |
+| `none_of: [<values>]` | is none of the values (for an array: no item is) | no element's value is listed |
+| `matches: <regex>` | is a string the regular expression matches | every element sets a value it matches |
+
+Values are compared with their type: `equals: false` matches `<false/>`, not
+`<string>NO</string>`, and `equals: "42"` does not match `<integer>42</integer>`.
+Manifest attributes are text, so quote values there (`equals: "false"`).
+`matches` finds the pattern anywhere in the value; anchor it with `^` and `$`
+to match the whole value.
+
+Findings point at the value's line; when the value is missing, at its
+parent: the enclosing dictionary's key in Info.plist, the element in the
+manifest, or `<manifest>` when no element has that name. A check whose file
+does not exist is a finding too, so a moved file cannot switch it off
+silently. A check can be named in `ignore` (`rule: check:no-backup`) and under
+`rules:` like any rule, and `storehound --explain check:no-backup` prints it.
+To switch a check off for a while without deleting it, disable it under
+`rules:` with a reason, as for a built-in rule:
+
+```yaml
+rules:
+  check:no-backup:
+    enabled: false
+    reason: "Backups are back on until the token moves to the keystore."
+```
+
+Mistakes in a check (an unknown file or operator, a value of the wrong type,
+a missing `reason`) are configuration errors with the line number, exit
+code 2.
+
+The privacy manifest and entitlements are not supported yet.
 
 ## Use it as a library
 

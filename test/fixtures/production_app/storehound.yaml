@@ -17,3 +17,35 @@ rules:
       # CoreLocation (seen with nm -u on a release build); the app never
       # requests location.
       acme_payments: [NSLocationWhenInUseUsageDescription]
+
+# Pins this app keeps on top of the built-in rules.
+checks:
+  encryption-exempt:
+    file: info_plist
+    key: ITSAppUsesNonExemptEncryption
+    equals: false
+    reason: Export compliance is answered once in App Store Connect.
+  background-modes-pinned:
+    file: info_plist
+    key: UIBackgroundModes
+    equals: [audio, remote-notification]
+    reason: The modes App Review accepted. A new one needs review notes first.
+  ats-no-arbitrary-loads:
+    file: info_plist
+    key: NSAppTransportSecurity.NSAllowsArbitraryLoads
+    absent_or_equals: false
+    reason: All traffic is HTTPS.
+  no-backup:
+    file: android_manifest
+    element: application
+    attribute: android:allowBackup
+    equals: "false"
+    reason: The session token lives in shared preferences.
+  no-media-permissions:
+    file: android_manifest
+    element: uses-permission
+    attribute: android:name
+    none_of:
+      - android.permission.READ_MEDIA_IMAGES
+      - android.permission.READ_MEDIA_VIDEO
+    reason: Receipts come through the system document picker, which needs no permission.

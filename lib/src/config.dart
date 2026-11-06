@@ -5,6 +5,7 @@ import 'package:yaml/yaml.dart';
 import 'finding.dart';
 import 'project.dart';
 import 'rule.dart';
+import 'rules/project_checks.dart';
 
 /// The configuration file name looked up in the project root.
 const configFileName = 'storehound.yaml';
@@ -113,6 +114,7 @@ class PreflightConfig {
     this.ignores = const [],
     this.failOn = Severity.error,
     this.paths = const ProjectPaths(),
+    this.checkRules = const [],
     this.source,
   });
 
@@ -127,6 +129,10 @@ class PreflightConfig {
 
   /// Path overrides.
   final ProjectPaths paths;
+
+  /// The project checks from the `checks:` section, in file order.
+  /// `runPreflight` runs them after the built-in rules.
+  final List<ProjectCheckRule> checkRules;
 
   /// The file this configuration was read from, if any.
   final String? source;
@@ -215,7 +221,13 @@ class _Parser {
   }
 
   PreflightConfig parse(YamlMap doc) {
-    allowOnly(doc, const {'fail_on', 'paths', 'rules', 'ignore'}, 'the file');
+    allowOnly(doc, const {
+      'fail_on',
+      'paths',
+      'checks',
+      'rules',
+      'ignore',
+    }, 'the file');
 
     Severity? failOn = Severity.error;
     final failOnValue = doc['fail_on'];
@@ -233,9 +245,15 @@ class _Parser {
       }
     }
 
+    // Checks first: `rules` and `ignore` may name them as `check:<name>`.
+    final checks = _checks(doc);
+    for (final check in checks) {
+      rules[check.id] = check;
+    }
     return PreflightConfig(
       failOn: failOn,
       paths: _paths(doc),
+      checkRules: checks,
       rules: _rules(doc),
       ignores: _ignores(doc),
       source: source,
@@ -376,6 +394,218 @@ class _Parser {
       path: optString(node, 'path'),
       match: optString(node, 'match'),
     );
+  }
+
+  static final _checkName = RegExp(r'^[a-z0-9]+(-[a-z0-9]+)*$');
+
+  List<ProjectCheckRule> _checks(YamlMap doc) {
+    final section = doc['checks'];
+    if (section == null) return const [];
+    if (section is! YamlMap) {
+      fail('`checks` must be a map of check names', nodeOf(doc, 'checks'));
+    }
+    return [
+      for (final MapEntry(key: keyNode, value: valueNode)
+          in section.nodes.entries)
+        _check(keyNode, valueNode),
+    ];
+  }
+
+  ProjectCheckRule _check(Object? keyNode, YamlNode node) {
+    final name = keyNode is YamlScalar ? '${keyNode.value}' : '$keyNode';
+    if (!_checkName.hasMatch(name)) {
+      fail(
+        'check name `$name` must be kebab-case (lowercase letters, digits '
+        'and single hyphens), like `no-backup`',
+        keyNode,
+      );
+    }
+    final where = '`checks.$name`';
+    if (node is! YamlMap) fail('$where must be a map', node);
+
+    final fileValue = optString(node, 'file');
+    if (fileValue == null) {
+      fail(
+        '$where needs `file`: '
+        '${CheckFile.values.map((f) => f.key).join(' or ')}',
+        node,
+      );
+    }
+    final file = CheckFile.values.where((f) => f.key == fileValue).firstOrNull;
+    if (file == null) {
+      fail(
+        'unknown file `$fileValue` in $where; expected one of '
+        '${CheckFile.values.map((f) => f.key).join(', ')}',
+        nodeOf(node, 'file'),
+      );
+    }
+    final operatorKeys = {for (final o in CheckOperator.values) o.key};
+    allowOnly(node, {
+      'file',
+      'reason',
+      'severity',
+      ...switch (file) {
+        CheckFile.infoPlist => const {'key'},
+        CheckFile.androidManifest => const {'element', 'attribute'},
+      },
+      ...operatorKeys,
+    }, where);
+
+    final reason = optString(node, 'reason');
+    if (reason == null) {
+      fail(
+        '$where needs a non-empty `reason`, so the next person knows why '
+        'the value is pinned',
+        node,
+      );
+    }
+    var severity = Severity.error;
+    if (node['severity'] != null) {
+      severity =
+          Severity.tryParse('${node['severity']}') ??
+          fail(
+            '`severity` must be error, warning or info',
+            nodeOf(node, 'severity'),
+          );
+    }
+
+    final operators = [
+      for (final o in CheckOperator.values)
+        if (node.containsKey(o.key)) o,
+    ];
+    if (operators.length != 1) {
+      fail(
+        operators.isEmpty
+            ? '$where needs one of ${operatorKeys.join(', ')}'
+            : '$where has ${operators.map((o) => '`${o.key}`').join(' and ')}; '
+                  'use one per check',
+        node,
+      );
+    }
+    final operator = operators.single;
+    final expected = _operand(
+      operator,
+      file,
+      node.nodes[operator.key]!,
+      '$where `${operator.key}`',
+    );
+
+    switch (file) {
+      case CheckFile.infoPlist:
+        return ProjectCheckRule(
+          name: name,
+          file: file,
+          keyPath: _keyPath(node, where),
+          operator: operator,
+          expected: expected,
+          reason: reason,
+          severity: severity,
+        );
+      case CheckFile.androidManifest:
+        final element = optString(node, 'element');
+        final attribute = optString(node, 'attribute');
+        if (element == null || attribute == null) {
+          fail(
+            '$where needs `element` and `attribute`, e.g. '
+            '`element: application` and `attribute: android:allowBackup`',
+            node,
+          );
+        }
+        return ProjectCheckRule(
+          name: name,
+          file: file,
+          element: element,
+          attribute: attribute,
+          operator: operator,
+          expected: expected,
+          reason: reason,
+          severity: severity,
+        );
+    }
+  }
+
+  /// `key: A.B.C` (a dot steps into a nested dictionary) or
+  /// `key: [A, B.with.dots]` (one item per dictionary, taken literally).
+  List<String> _keyPath(YamlMap node, String where) {
+    final value = node['key'];
+    if (value == null) {
+      fail('$where needs `key`, e.g. `key: UIBackgroundModes`', node);
+    }
+    final keyNode = nodeOf(node, 'key');
+    final segments = switch (value) {
+      final String s => s.split('.'),
+      final YamlList l when l.isNotEmpty && l.every((v) => v is String) =>
+        l.cast<String>().toList(),
+      _ => fail('`key` must be a string or a list of strings', keyNode),
+    };
+    if (segments.any((s) => s.trim().isEmpty)) {
+      fail('`key` has an empty part: `$value`', keyNode);
+    }
+    return segments;
+  }
+
+  /// Validates an operator's value and converts it to what
+  /// [ProjectCheckRule.expected] holds.
+  Object _operand(
+    CheckOperator operator,
+    CheckFile file,
+    YamlNode node,
+    String where,
+  ) {
+    final value = node.value;
+    final manifest = file == CheckFile.androidManifest;
+    final scalarHint = manifest
+        ? 'a string (attribute values are text: write `"false"`, not `false`)'
+        : 'a string, boolean or number';
+
+    Object scalar(YamlNode item) {
+      final v = item.value;
+      if (v is String) return v;
+      if (!manifest && (v is bool || v is num)) return v as Object;
+      fail('$where must be $scalarHint', item);
+    }
+
+    switch (operator) {
+      case CheckOperator.exists || CheckOperator.absent:
+        if (value != true) {
+          fail(
+            '$where takes `true`; for the opposite, use '
+            '`${operator == CheckOperator.exists ? 'absent' : 'exists'}: '
+            'true`',
+            node,
+          );
+        }
+        return true;
+      case CheckOperator.equals ||
+          CheckOperator.absentOrEquals ||
+          CheckOperator.notEquals:
+        if (node is YamlList) {
+          if (manifest) {
+            fail(
+              '$where takes one value; use `contains` or `none_of` for '
+              'several',
+              node,
+            );
+          }
+          return [for (final item in node.nodes) scalar(item)];
+        }
+        return scalar(node);
+      case CheckOperator.contains || CheckOperator.noneOf:
+        if (node is YamlList) {
+          if (node.isEmpty) fail('$where must list at least one value', node);
+          return [for (final item in node.nodes) scalar(item)];
+        }
+        return [scalar(node)];
+      case CheckOperator.matches:
+        if (value is! String || value.isEmpty) {
+          fail('$where must be a regular expression, as a string', node);
+        }
+        try {
+          return RegExp(value);
+        } on FormatException catch (e) {
+          fail('$where is not a valid regular expression: ${e.message}', node);
+        }
+    }
   }
 
   /// Converts YAML collections into plain Dart ones so rules never depend on
