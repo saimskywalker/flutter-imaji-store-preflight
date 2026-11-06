@@ -61,6 +61,9 @@ What it covers:
   the `applinks:` associated domains.
 - **Two ExportOptions files**: App Store Connect (build number managed by
   CI) and ad hoc (`release-testing`).
+- **Project checks** in `storehound.yaml` that pin the encryption answer,
+  the exact background modes, no arbitrary loads, `android:allowBackup` and
+  the absent media permissions.
 
 Not covered yet, because no rule reads these files: per-flavor and
 per-build-type Android manifests beyond `src/main`, per-flavor Info.plist or

@@ -86,7 +86,8 @@ class PreflightReport {
 ///
 /// [today] fixes the date deadline rules measure against (default: now, in
 /// UTC). [rules] replaces the built-in rule set, which is mostly useful in
-/// tests. [environment] is passed to [Project.load].
+/// tests; the project checks in [PreflightConfig.checkRules] run after them
+/// either way. [environment] is passed to [Project.load].
 PreflightReport runPreflight(
   String projectRoot, {
   PreflightConfig config = const PreflightConfig(),
@@ -108,7 +109,7 @@ PreflightReport runPreflight(
   final suppressed = <SuppressedFinding>[];
   final usedIgnores = <IgnoreEntry>{};
 
-  for (final rule in rules) {
+  for (final rule in [...rules, ...config.checkRules]) {
     final ruleConfig = config.forRule(rule.id);
     if (!ruleConfig.enabled) {
       disabled.add(DisabledRule(rule, ruleConfig.reason ?? ''));

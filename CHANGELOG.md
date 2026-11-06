@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0
+
+- Project checks: app-specific pins under `checks:` in `storehound.yaml`, for
+  `Info.plist` keys (with nested keys) and `AndroidManifest.xml` attributes,
+  with the operators `exists`, `absent`, `equals`, `absent_or_equals`,
+  `not_equals`, `contains`, `none_of` and `matches`. Each check needs a
+  `reason`, defaults to `error`, and is reported in text, JSON and SARIF as
+  `check:<name>` with the file and line of the value (or of its parent when
+  it is missing). `ignore`, `rules` and `--explain check:<name>` accept it.
+  A mistake in a check is a configuration error with its line (exit code 2).
+- The production-shaped fixture pins five values with `checks:`.
+
 ## 0.2.0
 
 Renamed from imaji_store_preflight. Same rules and CLI; the command is now

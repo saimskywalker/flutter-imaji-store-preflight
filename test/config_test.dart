@@ -155,6 +155,269 @@ ignore:
     );
   });
 
+  group('checks', () {
+    Matcher throwsConfigAt(Object message, int line) => throwsA(
+      isA<ConfigException>()
+          .having((e) => e.message, 'message', message)
+          .having((e) => e.line, 'line', line),
+    );
+
+    test('reads Info.plist and AndroidManifest checks', () {
+      final config = parse('''
+checks:
+  ats-no-arbitrary-loads:
+    file: info_plist
+    key: NSAppTransportSecurity.NSAllowsArbitraryLoads
+    absent_or_equals: false
+    reason: All traffic is HTTPS.
+  no-media-permissions:
+    file: android_manifest
+    element: uses-permission
+    attribute: android:name
+    none_of: [android.permission.READ_MEDIA_IMAGES]
+    severity: warning
+    reason: The app uses the system photo picker only.
+''');
+      final [plist, manifest] = config.checkRules;
+      expect(plist.id, 'check:ats-no-arbitrary-loads');
+      expect(plist.file, CheckFile.infoPlist);
+      expect(plist.keyPath, [
+        'NSAppTransportSecurity',
+        'NSAllowsArbitraryLoads',
+      ]);
+      expect(plist.operator, CheckOperator.absentOrEquals);
+      expect(plist.expected, false);
+      expect(plist.defaultSeverity, Severity.error);
+      expect(plist.why, 'All traffic is HTTPS.');
+      expect(manifest.file, CheckFile.androidManifest);
+      expect(manifest.element, 'uses-permission');
+      expect(manifest.attribute, 'android:name');
+      expect(manifest.expected, ['android.permission.READ_MEDIA_IMAGES']);
+      expect(manifest.defaultSeverity, Severity.warning);
+    });
+
+    test('a key can be a list of literal parts', () {
+      final check = parse('''
+checks:
+  subdomains:
+    file: info_plist
+    key: [NSAppTransportSecurity, NSExceptionDomains, example.com]
+    exists: true
+    reason: The API host is pinned.
+''').checkRules.single;
+      expect(check.keyPath, [
+        'NSAppTransportSecurity',
+        'NSExceptionDomains',
+        'example.com',
+      ]);
+    });
+
+    test('rules and ignore can name a check', () {
+      final config = parse('''
+checks:
+  no-backup:
+    file: android_manifest
+    element: application
+    attribute: android:allowBackup
+    equals: "false"
+    reason: Tokens live in shared preferences.
+rules:
+  check:no-backup:
+    severity: warning
+ignore:
+  - rule: check:no-backup
+    reason: Being fixed in the next release.
+''');
+      expect(config.forRule('check:no-backup').severity, Severity.warning);
+      expect(config.ignores.single.rule, 'check:no-backup');
+      expect(
+        () => parse('ignore:\n  - rule: check:nope\n    reason: x\n'),
+        throwsConfig(contains('unknown rule `check:nope`')),
+      );
+    });
+
+    test('every check needs a reason', () {
+      expect(
+        () => parse('''
+checks:
+  pin:
+    file: info_plist
+    key: ITSAppUsesNonExemptEncryption
+    equals: false
+'''),
+        throwsConfigAt(contains('non-empty `reason`'), 3),
+      );
+    });
+
+    test('an unknown or missing file is an error', () {
+      expect(
+        () => parse('''
+checks:
+  pin:
+    file: build_gradle
+    key: minSdk
+    equals: 24
+    reason: x
+'''),
+        throwsConfigAt(
+          'unknown file `build_gradle` in `checks.pin`; expected one of '
+          'info_plist, android_manifest',
+          3,
+        ),
+      );
+      expect(
+        () => parse('checks:\n  pin:\n    key: A\n    exists: true\n'),
+        throwsConfigAt(contains('needs `file`'), 3),
+      );
+    });
+
+    test('an unknown operator is an error that lists the operators', () {
+      expect(
+        () => parse('''
+checks:
+  pin:
+    file: info_plist
+    key: CFBundleVersion
+    greater_than: 3
+    reason: x
+'''),
+        throwsConfigAt(
+          allOf(contains('unknown key `greater_than`'), contains('none_of')),
+          5,
+        ),
+      );
+    });
+
+    test('exactly one operator per check', () {
+      expect(
+        () => parse('''
+checks:
+  pin:
+    file: info_plist
+    key: CFBundleVersion
+    reason: x
+'''),
+        throwsConfigAt(contains('needs one of exists, absent, equals'), 3),
+      );
+      expect(
+        () => parse('''
+checks:
+  pin:
+    file: info_plist
+    key: CFBundleVersion
+    exists: true
+    matches: x
+    reason: x
+'''),
+        throwsConfigAt(contains('has `exists` and `matches`'), 3),
+      );
+    });
+
+    test('keys of the other file kind are errors', () {
+      expect(
+        () => parse('''
+checks:
+  pin:
+    file: android_manifest
+    key: android:allowBackup
+    exists: true
+    reason: x
+'''),
+        throwsConfigAt(contains('unknown key `key`'), 4),
+      );
+      expect(
+        () => parse('''
+checks:
+  pin:
+    file: android_manifest
+    element: application
+    exists: true
+    reason: x
+'''),
+        throwsConfigAt(contains('needs `element` and `attribute`'), 3),
+      );
+      expect(
+        () => parse('''
+checks:
+  pin:
+    file: info_plist
+    exists: true
+    reason: x
+'''),
+        throwsConfigAt(contains('needs `key`'), 3),
+      );
+    });
+
+    test('wrong value types are errors with the value line', () {
+      String check(String file, String rest) =>
+          'checks:\n  pin:\n    file: $file\n    reason: x\n$rest';
+      String plistCheck(String op) => check('info_plist', '    key: K\n$op');
+      String manifestCheck(String op) => check(
+        'android_manifest',
+        '    element: application\n    attribute: android:allowBackup\n$op',
+      );
+      expect(
+        () => parse(manifestCheck('    equals: false\n')),
+        throwsConfigAt(contains('write `"false"`, not `false`'), 7),
+      );
+      expect(
+        () => parse(manifestCheck('    equals: [a, b]\n')),
+        throwsConfigAt(contains('use `contains` or `none_of`'), 7),
+      );
+      expect(
+        () => parse(plistCheck('    equals: {a: 1}\n')),
+        throwsConfigAt(contains('a string, boolean or number'), 6),
+      );
+      expect(
+        () => parse(plistCheck('    equals:\n')),
+        throwsConfigAt(contains('a string, boolean or number'), 6),
+      );
+      expect(
+        () => parse(plistCheck('    equals: [a, [b]]\n')),
+        throwsConfigAt(contains('a string, boolean or number'), 6),
+      );
+      expect(
+        () => parse(plistCheck('    contains: []\n')),
+        throwsConfigAt(contains('at least one value'), 6),
+      );
+      expect(
+        () => parse(plistCheck('    exists: false\n')),
+        throwsConfigAt(contains('use `absent: true`'), 6),
+      );
+      expect(
+        () => parse(plistCheck('    matches: 3\n')),
+        throwsConfigAt(contains('a regular expression'), 6),
+      );
+      expect(
+        () => parse(plistCheck('    matches: "("\n')),
+        throwsConfigAt(contains('not a valid regular expression'), 6),
+      );
+      expect(
+        () => parse(check('info_plist', '    key: A..B\n    exists: true\n')),
+        throwsConfigAt(contains('empty part'), 5),
+      );
+      expect(
+        () => parse(check('info_plist', '    key: {A: B}\n    exists: true\n')),
+        throwsConfigAt(contains('a string or a list of strings'), 5),
+      );
+    });
+
+    test('check names are kebab-case and checks is a map', () {
+      expect(
+        () => parse('checks:\n  No_Backup:\n    file: info_plist\n'),
+        throwsConfigAt(contains('must be kebab-case'), 2),
+      );
+      expect(
+        () => parse('checks:\n  - pin\n'),
+        throwsConfigAt(contains('`checks` must be a map'), 2),
+      );
+      expect(
+        () => parse('checks:\n  pin: true\n'),
+        throwsConfigAt(contains('`checks.pin` must be a map'), 2),
+      );
+    });
+  });
+
   group('IgnoreEntry.matches', () {
     const finding = Finding(
       ruleId: 'alpha',
